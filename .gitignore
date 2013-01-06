@@ -1,0 +1,9 @@
+?.rb
+coverage
+rdoc
+doc
+.yardoc
+.bundle
+pkg
+*.swp
+tmp
