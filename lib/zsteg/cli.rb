@@ -1,7 +1,7 @@
 require 'optparse'
 require 'awesome_print'
 
-module PNGSteg
+module ZSteg
   class CLI
     DEFAULT_ACTIONS = %w'check'
     DEFAULT_LIMIT   = 256
@@ -12,9 +12,14 @@ module PNGSteg
 
     def run
       @actions = []
-      @options = { :verbose => 0, :limit => DEFAULT_LIMIT, :bits => [1,2,3,4] }
+      @options = {
+        :verbose => 0,
+        :limit => DEFAULT_LIMIT,
+        :bits  => [1,2,3,4],
+        :order => 'xy'
+      }
       optparser = OptionParser.new do |opts|
-        opts.banner = "Usage: pngsteg [options] filename.png"
+        opts.banner = "Usage: zsteg [options] filename.png"
         opts.separator ""
 
         opts.on("-c", "--channels X", /[rgba,]+/,

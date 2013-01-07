@@ -1,4 +1,4 @@
-module PNGSteg
+module ZSteg
   module Result
     module Readable
       # src can be IO or String, or anything that responds to :read or :unpack
@@ -45,7 +45,7 @@ module PNGSteg
 
     class Struct < ::Struct
       def to_s
-        inspect.sub('#<struct PNGSteg::', '<')
+        inspect.sub('#<struct ZSteg::', '<')
       end
     end
 
@@ -59,7 +59,7 @@ module PNGSteg
       end
 
 #      def to_s
-#        inspect.sub('#<struct PNGSteg::Result::', '<')
+#        inspect.sub('#<struct ZSteg::Result::', '<')
 #      end
     end
 

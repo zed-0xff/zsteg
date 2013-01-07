@@ -1,4 +1,4 @@
-module PNGSteg
+module ZSteg
   class Extractor
     # image can be either filename or ZPNG::Image
     def initialize image, params = {}

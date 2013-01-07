@@ -1,6 +1,6 @@
 $:.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
-require 'pngsteg'
-require 'pngsteg/cli'
+require 'zsteg'
+require 'zsteg/cli'
 
 SAMPLES_DIR = File.expand_path("../samples", File.dirname(__FILE__))
 
@@ -21,7 +21,7 @@ def cli *args
       orig_stdout, out = $stdout, ""
       begin
         $stdout = StringIO.new(out)
-        PNGSteg::CLI.new(args).run
+        ZSteg::CLI.new(args).run
       ensure
         $stdout = orig_stdout
       end

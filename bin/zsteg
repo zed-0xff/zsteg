@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__) + '/../lib'))
-require 'pngsteg'
-require 'pngsteg/cli'
+require 'zsteg'
+require 'zsteg/cli'
 
-PNGSteg::CLI.new.run
+ZSteg::CLI.new.run

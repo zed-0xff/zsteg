@@ -1,7 +1,7 @@
 require 'stringio'
 require 'zlib'
 
-module PNGSteg
+module ZSteg
   class Checker
     attr_accessor :params, :channels, :verbose
 
@@ -133,6 +133,8 @@ module PNGSteg
         if result
           puts result
           return true if verbose == 1.5
+        else
+          puts
         end
         if data.size > 0
           if data =~ /\A[\x20-\x7e\r\n\t]\Z/

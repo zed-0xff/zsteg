@@ -14,16 +14,16 @@ require 'rake'
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "pngsteg"
-  gem.homepage = "http://github.com/zed-0xff/pngsteg"
+  gem.name = "zsteg"
+  gem.homepage = "http://github.com/zed-0xff/zsteg"
   gem.license = "MIT"
-  gem.summary = %Q{Detect stegano-hidden data in PNG files}
+  gem.summary = %Q{Detect stegano-hidden data in PNG & BMP files.}
   #gem.description = %Q{TODO: longer description of your gem}
   gem.email = "zed.0xff@gmail.com"
   gem.authors = ["Andrey \"Zed\" Zaikin"]
-  #gem.executables = %w'pngsteg'
+  #gem.executables = %w'zsteg'
   gem.files.include "lib/**/*.rb"
-  gem.files.include "bin/pngsteg"
+  gem.files.include "bin/zsteg"
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
@@ -52,7 +52,7 @@ task :readme do
     cmd.strip!
     puts "[.] #{cmd} ..."
     r = "    # #{cmd}\n\n"
-    cmd.sub! /^pngsteg/,"../bin/pngsteg"
+    cmd.sub! /^zsteg/,"../bin/zsteg"
     lines = `#{cmd}`.sub(/\A\n+/m,'').sub(/\s+\Z/,'').split("\n")
     lines = lines[0,25] + ['...'] if lines.size > 50
     r << lines.map{|x| "    #{x}"}.join("\n")
@@ -87,8 +87,8 @@ task :console, [:script] do |t,args|
   require 'irb'
 
   # ZZZ actually added only these 2 lines
-  require 'pngsteg'
-  include ZPNG
+  require 'zsteg'
+  include ZSteg
 
   # set the optional script to run
   IRB.conf[:SCRIPT] = args.script
