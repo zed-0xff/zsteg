@@ -17,18 +17,22 @@ module PNGSteg
         opts.banner = "Usage: pngsteg [options] filename.png"
         opts.separator ""
 
-        opts.on("-C", "--channels X", /[rgba,]+/,
+        opts.on("-c", "--channels X", /[rgba,]+/,
                 "channels (R/G/B/A) or any combination, comma separated",
                 "valid values: r,g,b,a,rg,rgb,bgr,rgba,..."
         ){ |x| @options[:channels] = x.split(',') }
 
-        opts.on("-L", "--limit N", Integer,
+        opts.on("-l", "--limit N", Integer,
                 "limit bytes checked, 0 = no limit (default: #{DEFAULT_LIMIT})"
         ){ |n| @options[:limit] = n }
 
         opts.on("-b", "--bits N", /[\d,]+/,
                 "number of bits (1..8), single value or comma separated"
         ){ |n| @options[:bits] = n.split(',').map(&:to_i) }
+
+        opts.on "-E", "--extract NAME", "extract specified payload, NAME is like '1b,rgb,lsb'" do |x|
+          @actions << [:extract, x]
+        end
 
         opts.separator ""
         opts.on "-v", "--verbose", "Run verbosely (can be used multiple times)" do |v|
@@ -66,8 +70,28 @@ module PNGSteg
       # prevents a 'Broken pipe - <STDOUT> (Errno::EPIPE)' message
     end
 
+    ###########################################################################
+    # actions
+
     def check
       Checker.new(@fname, @options).check
+    end
+
+    def extract name
+      h = {}
+      name.split(',').each do |x|
+        case x
+        when 'lsb'
+          h[:bit_order] = :lsb
+        when 'msg'
+          h[:bit_order] = :msb
+        when /(\d)b/
+          h[:bits] = $1.to_i
+        when /\A[rgba]+\Z/
+          h[:channels] = x.split('')
+        end
+      end
+      print Extractor.new(@fname, @options).extract(h)
     end
 
   end
