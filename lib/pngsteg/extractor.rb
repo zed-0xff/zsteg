@@ -16,15 +16,19 @@ module PNGSteg
       raise "invalid bits value #{bits.inspect}" unless (1..8).include?(bits)
       mask = 2**bits - 1
 
+
       data = ''.force_encoding('binary')
       a = []
-      @image.each_pixel do |color|
+      coord_iterator(params[:order]) do |x,y|
+        color = @image[x,y]
+
         channels.each do |c|
           value = color.send(c)
           bits.times do |bidx|
             a << ((value & (1<<(bits-bidx-1))) == 0 ? 0 : 1)
           end
         end
+
         if a.size >= 8
           byte = 0
           if params[:bit_order] == :msb
@@ -46,6 +50,46 @@ module PNGSteg
         print "[zerotail #{oldsz-data.size}]".gray if @verbose > 1
       end
       data
+    end
+
+    # 'xy': x=0,y=0; x=1,y=0; x=2,y=0; ...
+    # 'yx': x=0,y=0; x=0,y=1; x=0,y=2; ...
+    # ...
+    # 'xY': x=0,  y=MAX; x=1,    y=MAX; x=2,    y=MAX; ...
+    # 'XY': x=MAX,y=MAX; x=MAX-1,y=MAX; x=MAX-2,y=MAX; ...
+    def coord_iterator type = nil
+      type ||= 'xy'
+      raise "invalid iterator type #{type}" unless type =~ /\A(xy|yx)\Z/i
+
+      x0,x1,xstep =
+        if type.index('x')
+          [0, @image.width-1, 1]
+        else
+          [@image.width-1, 0, -1]
+        end
+
+      y0,y1,ystep =
+        if type.index('y')
+          [0, @image.height-1, 1]
+        else
+          [@image.height-1, 0, -1]
+        end
+
+      if type[0,1].downcase == 'x'
+        # ROW iterator
+        y0.step(y1,ystep) do |y|
+          x0.step(x1,xstep) do |x|
+            yield x,y
+          end
+        end
+      else
+        # COLUMN iterator
+        x0.step(x1,xstep) do |x|
+          y0.step(y1,ystep) do |y|
+            yield x,y
+          end
+        end
+      end
     end
   end
 end

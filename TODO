@@ -1,3 +1,8 @@
+[ ] gzip
+
+[+] BMP
+[+] zlib
+
 [ ] detect AES from http://punkroy.drque.net/PNG_Steganography/Steganography5.php
 [?] http://tobyinkster.co.uk/article/steg-encode/
 [ ] Sieve of Eratosthenes: http://wiki.cedricbonhomme.org/security:steganography

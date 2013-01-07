@@ -1,4 +1,5 @@
 require 'stringio'
+require 'zlib'
 
 module PNGSteg
   class Checker
@@ -27,11 +28,18 @@ module PNGSteg
       check_extradata
       check_metadata
 
-      Array(params[:bits]).each do |bits|
-        channels.each do |c|
-          check_channels c, @params.merge( :bits => bits )
+      if params[:order].to_s.downcase['all']
+        params[:order] = %w'xy yx XY YX Xy yX xY Yx'
+      end
+
+      Array(params[:order]).uniq.each do |order|
+        Array(params[:bits]).uniq.each do |bits|
+          channels.each do |c|
+            check_channels c, @params.merge( :bits => bits, :order => order )
+          end
         end
       end
+
       if @found_anything
         print "\r" + " "*20 + "\r" if @need_cr
       else
@@ -63,7 +71,7 @@ module PNGSteg
         return
       end
 
-      title = "#{params[:bits]}b,#{channels},#{params[:bit_order]}"
+      title = "#{params[:bits]}b,#{channels},#{params[:bit_order]},#{params[:order]}"
       show_title title
 
       p1 = params.clone
@@ -77,7 +85,7 @@ module PNGSteg
     end
 
     def show_title title
-      printf "\r[.] %-12s .. ", title
+      printf "\r[.] %-14s.. ", title
       $stdout.flush
     end
 
@@ -146,6 +154,25 @@ module PNGSteg
         io = StringIO.new(data)
         io.seek(idx+9)
         return Result::OpenStego.read(io)
+      end
+
+      # http://blog.w3challs.com/index.php?post/2012/03/25/NDH2k12-Prequals-We-are-looking-for-a-real-hacker-Wallpaper-image
+      # http://blog.w3challs.com/public/ndh2k12_prequalls/sp113.bmp
+      if idx = data.index(/\x78[\x9c\xda\x01]/)
+        begin
+#          x = Zlib::Inflate.inflate(data[idx,4096])
+          zi = Zlib::Inflate.new(Zlib::MAX_WBITS)
+          x = zi.inflate data[idx..-1]
+          # decompress OK
+          return Result::Zlib.new idx, x
+        rescue Zlib::BufError
+          # tried to decompress, but got EOF - need more data
+          return Result::Zlib.new idx
+        rescue Zlib::DataError, Zlib::NeedDict
+          # not a zlib
+        ensure
+          zi.close if zi && !zi.closed?
+        end
       end
 
       if (r=data[/[\x20-\x7e\r\n\t]{#{MIN_TEXT_LENGTH},}/]) && !one_char?(r)

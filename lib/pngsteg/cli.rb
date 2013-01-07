@@ -26,9 +26,19 @@ module PNGSteg
                 "limit bytes checked, 0 = no limit (default: #{DEFAULT_LIMIT})"
         ){ |n| @options[:limit] = n }
 
-        opts.on("-b", "--bits N", /[\d,]+/,
-                "number of bits (1..8), single value or comma separated"
-        ){ |n| @options[:bits] = n.split(',').map(&:to_i) }
+        opts.on("-b", "--bits N", /[\d,-]+/,
+                "number of bits (1..8), single value or '1,3,5' or '1-8'") do |n|
+          if n['-']
+            @options[:bits] = Range.new(*n.split('-').map(&:to_i)).to_a
+          else
+            @options[:bits] = n.split(',').map(&:to_i)
+          end
+        end
+
+        opts.on("-o", "--order X", /(?:all)|(?:[xy,]+)/i,
+                "pixel iteration order (default: 'xy')",
+                "valid values: ALL,xy,yx,XY,YX,xY,Xy,...",
+        ){ |x| @options[:order] = x.split(',') }
 
         opts.on "-E", "--extract NAME", "extract specified payload, NAME is like '1b,rgb,lsb'" do |x|
           @actions << [:extract, x]

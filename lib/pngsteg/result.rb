@@ -43,6 +43,12 @@ module PNGSteg
       end
     end
 
+    class Struct < ::Struct
+      def to_s
+        inspect.sub('#<struct PNGSteg::', '<')
+      end
+    end
+
     module InstanceMethods
       def pack
         to_a.pack self.class.const_get('FORMAT')
@@ -52,9 +58,9 @@ module PNGSteg
         to_a.all?{ |t| t == 0 || t.nil? || t.to_s.tr("\x00","").empty? }
       end
 
-      def to_s
-        inspect.sub('#<struct PNGSteg::Result::', '<')
-      end
+#      def to_s
+#        inspect.sub('#<struct PNGSteg::Result::', '<')
+#      end
     end
 
     class OpenStego < create_struct "CVCCCC",
@@ -71,9 +77,15 @@ module PNGSteg
       end
     end
 
-    class Text < create_struct "A", :text
+    class Text < Struct.new(:text)
       def to_s
-        "text="+text.inspect.magenta
+        "text="+text.inspect.gray
+      end
+    end
+
+    class Zlib < Struct.new(:offset, :data)
+      def to_s
+        super.sub(data.inspect, data.inspect.red)
       end
     end
   end
