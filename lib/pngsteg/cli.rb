@@ -12,7 +12,7 @@ module PNGSteg
 
     def run
       @actions = []
-      @options = { :verbose => 0, :limit => DEFAULT_LIMIT, :bits => [1,2,3,4,5,6] }
+      @options = { :verbose => 0, :limit => DEFAULT_LIMIT, :bits => [1,2,3,4] }
       optparser = OptionParser.new do |opts|
         opts.banner = "Usage: pngsteg [options] filename.png"
         opts.separator ""
@@ -49,7 +49,7 @@ module PNGSteg
       argv.each_with_index do |fname,idx|
         if argv.size > 1 && @options[:verbose] >= 0
           puts if idx > 0
-          puts "[.] #{fname}".color(:green)
+          puts "[.] #{fname}".green
         end
         @fname = fname
 
@@ -67,7 +67,6 @@ module PNGSteg
     end
 
     def check
-      puts "[.] #@fname".green
       Checker.new(@fname, @options).check
     end
 

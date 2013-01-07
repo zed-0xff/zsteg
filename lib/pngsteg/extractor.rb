@@ -3,6 +3,7 @@ module PNGSteg
     # image can be either filename or ZPNG::Image
     def initialize image, params = {}
       @image = image.is_a?(ZPNG::Image) ? image : ZPNG::Image.load(image)
+      @verbose = params[:verbose]
     end
 
     def extract params = {}
@@ -34,7 +35,7 @@ module PNGSteg
           #printf "[d] %02x %08b\n", byte, byte
           data << byte.chr
           if data.size >= limit
-            print "[limit #{params[:limit]}]".gray
+            print "[limit #{params[:limit]}]".gray if @verbose > 1
             break
           end
         end
@@ -42,7 +43,7 @@ module PNGSteg
       if params[:strip_tail_zeroes] != false && data[-1,1] == "\x00"
         oldsz = data.size
         data.sub!(/\x00+\Z/,'')
-        print "[zerotail #{oldsz-data.size}]".gray
+        print "[zerotail #{oldsz-data.size}]".gray if @verbose > 1
       end
       data
     end
