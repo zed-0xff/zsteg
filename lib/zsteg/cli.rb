@@ -5,6 +5,7 @@ module ZSteg
   class CLI
     DEFAULT_ACTIONS = %w'check'
     DEFAULT_LIMIT   = 256
+    DEFAULT_ORDER   = 'auto'
 
     def initialize argv = ARGV
       @argv = argv
@@ -16,7 +17,7 @@ module ZSteg
         :verbose => 0,
         :limit => DEFAULT_LIMIT,
         :bits  => [1,2,3,4],
-        :order => 'xy'
+        :order => DEFAULT_ORDER
       }
       optparser = OptionParser.new do |opts|
         opts.banner = "Usage: zsteg [options] filename.png"
@@ -40,8 +41,8 @@ module ZSteg
           end
         end
 
-        opts.on("-o", "--order X", /(?:all)|(?:[xy,]+)/i,
-                "pixel iteration order (default: 'xy')",
+        opts.on("-o", "--order X", /all|auto|[xy,]/i,
+                "pixel iteration order (default: '#{DEFAULT_ORDER}')",
                 "valid values: ALL,xy,yx,XY,YX,xY,Xy,...",
         ){ |x| @options[:order] = x.split(',') }
 
@@ -98,14 +99,19 @@ module ZSteg
         case x
         when 'lsb'
           h[:bit_order] = :lsb
-        when 'msg'
+        when 'msb'
           h[:bit_order] = :msb
         when /(\d)b/
           h[:bits] = $1.to_i
         when /\A[rgba]+\Z/
           h[:channels] = x.split('')
+        when /\Axy|yx\Z/i
+          h[:order] = x
+        else
+          raise "uknown param #{x.inspect}"
         end
       end
+      h[:limit] = @options[:limit] if @options[:limit] != DEFAULT_LIMIT
       print Extractor.new(@fname, @options).extract(h)
     end
 

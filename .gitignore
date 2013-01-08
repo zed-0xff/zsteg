@@ -7,3 +7,4 @@ doc
 pkg
 *.swp
 tmp
+samples/*.bmp

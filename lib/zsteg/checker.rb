@@ -20,16 +20,21 @@ module ZSteg
           %w'r g b rgb bgr'
         end
       @verbose = params[:verbose] || 0
+      @file_cmd = FileCmd.new
     end
 
     def check
       @found_anything = false
+      @file_cmd.start!
 
       check_extradata
       check_metadata
 
-      if params[:order].to_s.downcase['all']
+      case params[:order].to_s.downcase
+      when /all/
         params[:order] = %w'xy yx XY YX Xy yX xY Yx'
+      when /auto/
+        params[:order] = @image.format == :bmp ? 'xY' : 'xy'
       end
 
       Array(params[:order]).uniq.each do |order|
@@ -45,6 +50,8 @@ module ZSteg
       else
         puts "\r[=] nothing :(" + " "*20 # line cleanup
       end
+    ensure
+      @file_cmd.stop!
     end
 
     def check_extradata
@@ -85,7 +92,7 @@ module ZSteg
     end
 
     def show_title title
-      printf "\r[.] %-14s.. ", title
+      printf "\r[.] %-14s.. ".gray, title
       $stdout.flush
     end
 
@@ -111,7 +118,7 @@ module ZSteg
       case verbose
       when -999..0
         # verbosity=0: only show result if anything interesting found
-        if result
+        if result && !result.is_a?(Result::OneChar)
           puts result
           return true
         else
@@ -124,38 +131,37 @@ module ZSteg
 
       # verbosity>1: always show hexdump
 
-      if one_char?(data)
-        printf " = #{data.size} bytes, each = %s (0x%02x)\n".gray,
-          data[0].inspect, data[0].ord
-        return true
+      if result
+        puts result
+        return true if verbose == 1.5
       else
-        #puts " = #{data.size} bytes"
-        if result
-          puts result
-          return true if verbose == 1.5
-        else
-          puts
-        end
-        if data.size > 0
-          if data =~ /\A[\x20-\x7e\r\n\t]\Z/
-            # text-only data
-            p data
-          else
-            # binary data
-            s = ZPNG::Hexdump.dump(data){ |x| x.prepend(" "*4) }
-            print s
-            #print params[:allow_raw] ? s.red : s
-          end
-        end
+        puts
+      end
+      if data.size > 0
+        s = ZPNG::Hexdump.dump(data){ |x| x.prepend(" "*4) }
+        print s
       end
       true
     end
 
     def data2result data
+      if one_char?(data)
+        return Result::OneChar.new(data[0,1], data.size)
+      end
+
       if idx = data.index('OPENSTEGO')
         io = StringIO.new(data)
         io.seek(idx+9)
         return Result::OpenStego.read(io)
+      end
+
+      if data =~ /\A[\x20-\x7e\r\n\t]+\Z/
+        # whole ASCII
+        return Result::Text.new(data, 0)
+      end
+
+      if r = @file_cmd.check_data(data)
+        return Result::FileCmd.new(r, data)
       end
 
       # http://blog.w3challs.com/index.php?post/2012/03/25/NDH2k12-Prequals-We-are-looking-for-a-real-hacker-Wallpaper-image
@@ -166,10 +172,10 @@ module ZSteg
           zi = Zlib::Inflate.new(Zlib::MAX_WBITS)
           x = zi.inflate data[idx..-1]
           # decompress OK
-          return Result::Zlib.new idx, x
+          return Result::Zlib.new x, idx
         rescue Zlib::BufError
           # tried to decompress, but got EOF - need more data
-          return Result::Zlib.new idx
+          return Result::Zlib.new x, idx
         rescue Zlib::DataError, Zlib::NeedDict
           # not a zlib
         ensure
@@ -177,8 +183,8 @@ module ZSteg
         end
       end
 
-      if (r=data[/[\x20-\x7e\r\n\t]{#{MIN_TEXT_LENGTH},}/]) && !one_char?(r)
-        return Result::Text.new(r)
+      if (r=data[/[\x20-\x7e\r\n\t]{#{MIN_TEXT_LENGTH},}/])
+        return Result::Text.new(r, data.index(r))
       end
     end
 

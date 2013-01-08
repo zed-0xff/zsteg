@@ -73,19 +73,53 @@ module ZSteg
       end
 
       def to_s
-        super.red
+        super.sub(/^<Result::/,'').sub(/>$/,'').red
       end
     end
 
-    class Text < Struct.new(:text)
+    class Text < Struct.new(:text, :offset)
       def to_s
-        "text="+text.inspect.gray
+        "text: ".gray + (offset == 0 ? text.inspect.red : text.inspect)
       end
     end
 
-    class Zlib < Struct.new(:offset, :data)
+    class Zlib < Struct.new(:data, :offset)
       def to_s
-        super.sub(data.inspect, data.inspect.red)
+        "zlib: data=#{data.inspect.red}, offset=#{offset}"
+      end
+    end
+
+    class OneChar < Struct.new(:char, :size)
+      def to_s
+        "[#{char.inspect} repeated #{size} times]".gray
+      end
+    end
+
+    class FileCmd < Struct.new(:title, :data)
+      COLORMAP = {
+        /bitmap|jpeg|pdf|zip|rar|7z/i => :red,
+        /DBase 3 data/i               => :gray
+      }
+
+      def to_s
+        if title[/UTF-8 Unicode text/i]
+          begin
+            t = data.force_encoding("UTF-8").encode("UTF-32LE").encode("UTF-8")
+          rescue
+            t = data.force_encoding('binary')
+          end
+          return "utf8: " + t
+        end
+        COLORMAP.each do |re,color|
+          if title[re]
+            if color == :gray
+              return "file: #{title}".send(color)
+            else
+              return "file: " + title.send(color)
+            end
+          end
+        end
+        "file: " + title.yellow
       end
     end
   end

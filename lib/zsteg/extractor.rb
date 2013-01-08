@@ -58,7 +58,9 @@ module ZSteg
     # 'xY': x=0,  y=MAX; x=1,    y=MAX; x=2,    y=MAX; ...
     # 'XY': x=MAX,y=MAX; x=MAX-1,y=MAX; x=MAX-2,y=MAX; ...
     def coord_iterator type = nil
-      type ||= 'xy'
+      if type.nil? || type == 'auto'
+        type = @image.format == :bmp ? 'xY' : 'xy'
+      end
       raise "invalid iterator type #{type}" unless type =~ /\A(xy|yx)\Z/i
 
       x0,x1,xstep =

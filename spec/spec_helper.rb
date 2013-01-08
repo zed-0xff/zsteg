@@ -28,3 +28,12 @@ def cli *args
       out
     end
 end
+
+RSpec.configure do |config|
+  config.before :suite do
+    Dir[File.join(SAMPLES_DIR, "*.7z")].each do |fname|
+      next if File.exist?(fname.sub(/\.7z$/,''))
+      system "7z", "x", fname, "-o#{SAMPLES_DIR}"
+    end
+  end
+end
