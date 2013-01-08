@@ -94,6 +94,12 @@ module ZSteg
     end
 
     def extract name
+      if ['extradata', 'data after IEND'].include?(name)
+        img = ZPNG::Image.load(@fname)
+        print img.extradata
+        return
+      end
+
       h = {}
       name.split(',').each do |x|
         case x

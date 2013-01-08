@@ -16,7 +16,9 @@ module ZSteg
       'Non-ISO extended-ASCII text',
       'ISO-8859 text',
       'very short file',
-      'International EBCDIC text'
+      'International EBCDIC text',
+      'lif file',
+      'AmigaOS bitmap font'
     ]
 
     def start!

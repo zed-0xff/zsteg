@@ -1,6 +1,9 @@
 [ ] gzip
-[ ] auto pixel order for BMP
+[ ] wbStego
+[ ] openstego
+[ ] tmp/steg*/*.bmp
 
+[+] auto pixel order for BMP
 [+] BMP
 [+] zlib
 

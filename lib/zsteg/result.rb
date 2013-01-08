@@ -83,6 +83,12 @@ module ZSteg
       end
     end
 
+    # whole data is text
+    class WholeText < Text; end
+
+    # part of data is text
+    class PartialText < Text; end
+
     class Zlib < Struct.new(:data, :offset)
       def to_s
         "zlib: data=#{data.inspect.red}, offset=#{offset}"
@@ -120,6 +126,20 @@ module ZSteg
           end
         end
         "file: " + title.yellow
+      end
+    end
+
+    class Camouflage < Struct.new(:hidden_data_len, :host_orig_len)
+      def initialize(data)
+        self.hidden_data_len = (data[0x1a,4] || '').unpack('V').first
+        if data.size > 300 && data[-4,4] == "\x20\x20\x20\x20"
+          # orignal length of host file
+          self.host_orig_len = data[-281,4].unpack('V').first
+        end
+      end
+
+      def to_s
+        super.red
       end
     end
   end

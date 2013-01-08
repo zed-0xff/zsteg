@@ -58,8 +58,8 @@ module ZSteg
       if @image.extradata
         @found_anything = true
         title = "data after IEND"
-        puts "[.] #{title}: ".red
-        process_result @image.extradata, :allow_raw => true, :title => title
+        show_title title, :red
+        process_result @image.extradata, :special => true, :title => title
       end
     end
 
@@ -67,7 +67,7 @@ module ZSteg
       @image.metadata.each do |k,v|
         @found_anything = true
         show_title(title = "meta #{k}")
-        process_result v, :allow_raw => true, :title => title
+        process_result v, :special => true, :title => title
       end
     end
 
@@ -91,14 +91,14 @@ module ZSteg
       @found_anything ||= !@need_cr
     end
 
-    def show_title title
-      printf "\r[.] %-14s.. ".gray, title
+    def show_title title, color = :gray
+      printf "\r[.] %-14s.. ".send(color), title
       $stdout.flush
     end
 
     # returns true if was any output
     def process_result data, params
-      verbose = params[:allow_raw] ? [@verbose,1.5].max : @verbose
+      verbose = params[:special] ? [@verbose,1.5].max : @verbose
 
       if @cache[data]
         if verbose > 1
@@ -131,15 +131,13 @@ module ZSteg
 
       # verbosity>1: always show hexdump
 
-      if result
-        puts result
-        return true if verbose == 1.5
+      if params[:special]
+        puts result.is_a?(Result::PartialText) ? nil : result
       else
-        puts
+        puts result
       end
-      if data.size > 0
-        s = ZPNG::Hexdump.dump(data){ |x| x.prepend(" "*4) }
-        print s
+      if data.size > 0 && !result.is_a?(Result::OneChar) && !result.is_a?(Result::WholeText)
+        print ZPNG::Hexdump.dump(data){ |x| x.prepend(" "*4) }
       end
       true
     end
@@ -155,9 +153,13 @@ module ZSteg
         return Result::OpenStego.read(io)
       end
 
+      if data[0,2] == "\x00\x00" && data[3,3] == "\xed\xcd\x01"
+        return Result::Camouflage.new(data)
+      end
+
       if data =~ /\A[\x20-\x7e\r\n\t]+\Z/
         # whole ASCII
-        return Result::Text.new(data, 0)
+        return Result::WholeText.new(data, 0)
       end
 
       if r = @file_cmd.check_data(data)
@@ -184,7 +186,7 @@ module ZSteg
       end
 
       if (r=data[/[\x20-\x7e\r\n\t]{#{MIN_TEXT_LENGTH},}/])
-        return Result::Text.new(r, data.index(r))
+        return Result::PartialText.new(r, data.index(r))
       end
     end
 
