@@ -41,9 +41,16 @@ module ZSteg
           end
         end
 
-        opts.on("-o", "--order X", /all|auto|[xy,]/i,
+        opts.on "--lsb", "least significant BIT comes first" do
+          @options[:bit_order] = :lsb
+        end
+        opts.on "--msb", "most significant BIT comes first" do
+          @options[:bit_order] = :msb
+        end
+
+        opts.on("-o", "--order X", /all|auto|[bxy,]+/i,
                 "pixel iteration order (default: '#{DEFAULT_ORDER}')",
-                "valid values: ALL,xy,yx,XY,YX,xY,Xy,...",
+                "valid values: ALL,xy,yx,XY,YX,xY,Xy,bY,...",
         ){ |x| @options[:order] = x.split(',') }
 
         opts.on "-E", "--extract NAME", "extract specified payload, NAME is like '1b,rgb,lsb'" do |x|

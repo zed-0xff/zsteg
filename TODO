@@ -1,7 +1,8 @@
 [ ] gzip
-[ ] wbStego
+[*] wbStego
 [ ] openstego
 [ ] tmp/steg*/*.bmp
+[ ] 4bpp/8bpp BMP
 
 [+] auto pixel order for BMP
 [+] BMP

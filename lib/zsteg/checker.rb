@@ -34,13 +34,18 @@ module ZSteg
       when /all/
         params[:order] = %w'xy yx XY YX Xy yX xY Yx'
       when /auto/
-        params[:order] = @image.format == :bmp ? 'xY' : 'xy'
+        params[:order] = @image.format == :bmp ? %w'bY xY' : 'xy'
       end
 
       Array(params[:order]).uniq.each do |order|
         Array(params[:bits]).uniq.each do |bits|
-          channels.each do |c|
-            check_channels c, @params.merge( :bits => bits, :order => order )
+          if order[/b/i]
+            # byte iterator does not need channels
+            check_channels nil, @params.merge( :bits => bits, :order => order )
+          else
+            channels.each do |c|
+              check_channels c, @params.merge( :bits => bits, :order => order )
+            end
           end
         end
       end
@@ -78,13 +83,24 @@ module ZSteg
         return
       end
 
-      title = "#{params[:bits]}b,#{channels},#{params[:bit_order]},#{params[:order]}"
+      title = ["#{params[:bits]}b",channels,params[:bit_order],params[:order]].compact.join(',')
       show_title title
 
       p1 = params.clone
       p1.delete :channel
-      p1[:channels] = channels.split('')
       p1[:title] = title
+
+      if channels
+        p1[:channels] = channels.split('')
+        @max_hidden_size = p1[:channels].size*@image.width
+      elsif params[:order] =~ /b/i
+        # byte extractor
+        @max_hidden_size = @image.scanlines[0].decoded_bytes.size
+      else
+        raise "invalid params #{params.inspect}"
+      end
+      @max_hidden_size *= p1[:bits]*@image.height/8
+
       data = @extractor.extract p1
 
       @need_cr = !process_result(data, p1) # carriage return needed?
@@ -113,7 +129,7 @@ module ZSteg
       # TODO: store hash of data for large datas
       @cache[data] = params[:title]
 
-      result = data2result data
+      result = data2result data, params
 
       case verbose
       when -999..0
@@ -142,7 +158,7 @@ module ZSteg
       true
     end
 
-    def data2result data
+    def data2result data, params
       if one_char?(data)
         return Result::OneChar.new(data[0,1], data.size)
       end
@@ -155,6 +171,13 @@ module ZSteg
 
       if data[0,2] == "\x00\x00" && data[3,3] == "\xed\xcd\x01"
         return Result::Camouflage.new(data)
+      end
+
+      # only BMP & 1-bit-per-channel
+      if params[:bits] == 1 && params[:bit_order] == :lsb && params[:order] =~ /b/i
+        if x = WBStego.check(data, :image => @image, :max_hidden_size => @max_hidden_size)
+          return x
+        end
       end
 
       if data =~ /\A[\x20-\x7e\r\n\t]+\Z/
