@@ -5,6 +5,10 @@ module ZSteg
 
       def color_extract params = {}
         channels = (Array(params[:channels]) + Array(params[:channel])).compact
+        if channels.size == 1 && channels[0].size > 1
+          # 'rgb' => ['r', 'g', 'b']
+          channels = channels[0].split('')
+        end
 
         limit = params[:limit].to_i
         limit = 2**32 if limit <= 0

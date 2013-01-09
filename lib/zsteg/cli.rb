@@ -1,5 +1,4 @@
 require 'optparse'
-require 'awesome_print'
 
 module ZSteg
   class CLI
@@ -20,7 +19,7 @@ module ZSteg
         :order => DEFAULT_ORDER
       }
       optparser = OptionParser.new do |opts|
-        opts.banner = "Usage: zsteg [options] filename.png"
+        opts.banner = "Usage: zsteg [options] filename.png [param_string]"
         opts.separator ""
 
         opts.on("-c", "--channels X", /[rgba,]+/,
@@ -64,6 +63,11 @@ module ZSteg
         opts.on "-q", "--quiet", "Silent any warnings (can be used multiple times)" do |v|
           @options[:verbose] -= 1
         end
+        opts.on "-C", "--[no-]color", "Force (or disable) color output (default: auto)" do |x|
+          Sickill::Rainbow.enabled = x
+        end
+        opts.separator "\nPARAMS SHORTCUT\n"+
+          "\tzsteg fname.png 2b,b,lsb,xy  ==>  --bits 2 --channel b --lsb --order xy"
       end
 
       if (argv = optparser.parse(@argv)).empty?
@@ -72,6 +76,10 @@ module ZSteg
       end
 
       @actions = DEFAULT_ACTIONS if @actions.empty?
+
+      if argv.size == 2 && argv.last[','] && !File.exist?(argv.last)
+        @options.merge!(decode_param_string(argv.pop))
+      end
 
       argv.each_with_index do |fname,idx|
         if argv.size > 1 && @options[:verbose] >= 0
@@ -93,6 +101,27 @@ module ZSteg
       # prevents a 'Broken pipe - <STDOUT> (Errno::EPIPE)' message
     end
 
+    def decode_param_string s
+      h = {}
+      s.split(',').each do |x|
+        case x
+        when 'lsb'
+          h[:bit_order] = :lsb
+        when 'msb'
+          h[:bit_order] = :msb
+        when /(\d)b/
+          h[:bits] = $1.to_i
+        when /\A[rgba]+\Z/
+          h[:channels] = [x] #.split('')
+        when /\Axy|yx|yb|by\Z/i
+          h[:order] = x
+        else
+          raise "uknown param #{x.inspect}"
+        end
+      end
+      h
+    end
+
     ###########################################################################
     # actions
 
@@ -107,23 +136,7 @@ module ZSteg
         return
       end
 
-      h = {}
-      name.split(',').each do |x|
-        case x
-        when 'lsb'
-          h[:bit_order] = :lsb
-        when 'msb'
-          h[:bit_order] = :msb
-        when /(\d)b/
-          h[:bits] = $1.to_i
-        when /\A[rgba]+\Z/
-          h[:channels] = x.split('')
-        when /\Axy|yx\Z/i
-          h[:order] = x
-        else
-          raise "uknown param #{x.inspect}"
-        end
-      end
+      h = decode_param_string name
       h[:limit] = @options[:limit] if @options[:limit] != DEFAULT_LIMIT
       print Extractor.new(@fname, @options).extract(h)
     end

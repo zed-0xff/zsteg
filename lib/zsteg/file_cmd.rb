@@ -8,6 +8,7 @@ module ZSteg
       'data',
       'empty',
       'Sendmail frozen configuration',
+      'DBase 3 data file',
       'DOS executable',
       'Dyalog APL',
       '8086 relocatable',
@@ -18,7 +19,7 @@ module ZSteg
       'very short file',
       'International EBCDIC text',
       'lif file',
-      'AmigaOS bitmap font'
+      'AmigaOS bitmap font',
     ]
 
     def start!

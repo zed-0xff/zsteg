@@ -46,9 +46,11 @@ module ZSteg
     end
 
     class FileCmd < Struct.new(:title, :data)
-      COLORMAP = {
-        /bitmap|jpeg|pdf|zip|rar|7z/i => :red,
+      COLORMAP_TEXT = {
         /DBase 3 data/i               => :gray
+      }
+      COLORMAP_WORD = {
+        /bitmap|jpeg|pdf|zip|rar|7z/i => :red,
       }
 
       def to_s
@@ -60,16 +62,24 @@ module ZSteg
           end
           return "utf8: " + t
         end
-        COLORMAP.each do |re,color|
-          if title[re]
-            if color == :gray
-              return "file: #{title}".send(color)
-            else
-              return "file: " + title.send(color)
-            end
+        COLORMAP_TEXT.each do |re,color|
+          return colorize(color) if title[re]
+        end
+        title.downcase.split.each do |word|
+          COLORMAP_WORD.each do |re,color|
+            return colorize(color) if title.index(re) == 0
           end
         end
-        "file: " + title.yellow
+        colorize(:yellow)
+      end
+
+      def colorize color
+        if color == :gray
+          # gray whole string
+          "file: #{title}".send(color)
+        else
+          "file: " + title.send(color)
+        end
       end
     end
 
