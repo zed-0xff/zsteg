@@ -1,3 +1,4 @@
+[ ] make 'extract' cmd stream its data directly to stdout
 [ ] gzip
 [*] wbStego
 [ ] openstego

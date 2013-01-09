@@ -8,3 +8,5 @@ pkg
 *.swp
 tmp
 samples/*.bmp
+samples/hard
+samples/todo
