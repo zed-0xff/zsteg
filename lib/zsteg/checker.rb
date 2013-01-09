@@ -174,8 +174,11 @@ module ZSteg
       end
 
       # only BMP & 1-bit-per-channel
-      if params[:bits] == 1 && params[:bit_order] == :lsb && params[:order] =~ /b/i
-        if x = WBStego.check(data, :image => @image, :max_hidden_size => @max_hidden_size)
+      if params[:bits] == 1 && params[:bit_order] == :lsb
+        if x = WBStego.check(data, params.merge(
+                                                :image => @image,
+                                                :max_hidden_size => @max_hidden_size
+                            ))
           return x
         end
       end

@@ -48,6 +48,11 @@ module ZSteg
 
         def check data, params = {}
           return if data.size < 4
+          return if params[:bit_order] != :lsb
+          if params[:image].format == :bmp
+            return if params[:order] !~ /b/i
+          end
+
           size1 = (data[0,3] + "\x00").unpack('V')[0]
           avail_size =
             if params[:image].format == :bmp
@@ -73,11 +78,19 @@ module ZSteg
                 end
               end
 #              puts "[d] r=#{r.inspect} (#{r.size})"
-              return Result.new(size2, r[0,3], r[3..-1], true)
+              ext = r[0,3]
+              return unless valid_ext?(ext)
+              return Result.new(size2, ext, r[3..-1], true)
             end
           end
           # no even distribution
+          return unless valid_ext?(data[3,3])
           return Result.read(data)
+        end
+
+        # XXX require that file extension be 7-bit ASCII
+        def valid_ext? ext
+          ext =~ /\A[\x20-\x7e]+\Z/
         end
       end
     end
