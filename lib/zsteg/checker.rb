@@ -63,7 +63,7 @@ module ZSteg
       if @image.extradata
         @found_anything = true
         title = "data after IEND"
-        show_title title, :red
+        show_title title, :bright_red
         process_result @image.extradata, :special => true, :title => title
       end
     end

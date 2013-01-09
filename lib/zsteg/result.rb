@@ -17,13 +17,13 @@ module ZSteg
       end
 
       def to_s
-        super.sub(/^<Result::/,'').sub(/>$/,'').red
+        super.sub(/^<Result::/,'').sub(/>$/,'').bright_red
       end
     end
 
     class Text < Struct.new(:text, :offset)
       def to_s
-        "text: ".gray + (offset == 0 ? text.inspect.red : text.inspect)
+        "text: ".gray + (offset == 0 ? text.inspect.bright_red : text.inspect)
       end
     end
 
@@ -35,7 +35,7 @@ module ZSteg
 
     class Zlib < Struct.new(:data, :offset)
       def to_s
-        "zlib: data=#{data.inspect.red}, offset=#{offset}"
+        "zlib: data=#{data.inspect.bright_red}, offset=#{offset}"
       end
     end
 
@@ -50,7 +50,7 @@ module ZSteg
         /DBase 3 data/i               => :gray
       }
       COLORMAP_WORD = {
-        /bitmap|jpeg|pdf|zip|rar|7z/i => :red,
+        /bitmap|jpeg|pdf|zip|rar|7z/i => :bright_red,
       }
 
       def to_s
@@ -93,7 +93,7 @@ module ZSteg
       end
 
       def to_s
-        super.red
+        super.bright_red
       end
     end
   end

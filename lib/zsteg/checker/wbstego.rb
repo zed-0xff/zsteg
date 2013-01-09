@@ -2,17 +2,22 @@ module ZSteg
   class Checker
     module WBStego
 
-      class Result < IOStruct.new "a3a3a*", :size, :ext, :data, :even
+      class Result < IOStruct.new "a3a3a*", :size, :ext, :data, :even, :encrypted
         def initialize *args
           super
           if self.size.is_a?(String)
             self.size = (self.size[0,3] + "\x00").unpack('V')[0]
           end
-          self.even = false if self.even.nil?
+          self.even ||= false
+          self.encrypted ||= false
         end
 
         def to_s
-          inspect.sub("#<struct #{self.class.to_s}", "<wbStego").red
+          if encrypted
+            "maybe wbStego encrypted data, size=#{size}".gray
+          else
+            inspect.sub("#<struct #{self.class.to_s}", "<wbStego").bright_red
+          end
         end
       end
 
@@ -51,6 +56,8 @@ module ZSteg
           return if params[:bit_order] != :lsb
           if params[:image].format == :bmp
             return if params[:order] !~ /b/i
+          else
+            return if params[:channels].size != 3
           end
 
           size1 = (data[0,3] + "\x00").unpack('V')[0]
@@ -61,6 +68,9 @@ module ZSteg
               params[:max_hidden_size]
             end
           return if size1 == 0 || size1 > avail_size
+
+          result = nil
+
           size2 = (data[3,3] + "\x00").unpack('V')[0]
 #          p [size1, size2, avail_size]
           if size2 < avail_size
@@ -79,18 +89,20 @@ module ZSteg
               end
 #              puts "[d] r=#{r.inspect} (#{r.size})"
               ext = r[0,3]
-              return unless valid_ext?(ext)
-              return Result.new(size2, ext, r[3..-1], true)
+              #return unless valid_ext?(ext)
+              result = Result.new(size2, ext, r[3..-1], true)
             end
           end
           # no even distribution
-          return unless valid_ext?(data[3,3])
-          return Result.read(data)
+          #return unless valid_ext?(data[3,3])
+          result ||= Result.read(data)
+          result.encrypted = !valid_ext?(result.ext)
+          result
         end
 
         # XXX require that file extension be 7-bit ASCII
         def valid_ext? ext
-          ext =~ /\A[\x20-\x7e]+\Z/
+          ext =~ /\A[\x20-\x7e]+\Z/ && !ext['*'] && !ext['?']
         end
       end
     end
