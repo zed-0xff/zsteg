@@ -54,9 +54,10 @@ task :readme do
     puts "[.] #{cmd} ..."
     r = "    # #{cmd}\n\n"
     cmd.sub! /^zsteg/,"../bin/zsteg"
-    lines = `#{cmd}`.sub(/\A\n+/m,'').sub(/\s+\Z/,'').split("\n")
+    lines = `#{cmd}`.sub(/\A\n+/m,'').split("\n")
+    lines.map!{ |l| l.split("\r").last } # emulate CR's
     lines = lines[0,25] + ['...'] if lines.size > 50
-    r << lines.map{|x| "    #{x}"}.join("\n")
+    r << lines.map{|x| "    #{x}"}.join("\n").rstrip
     r << "\n"
   end
   Dir.chdir 'samples'
