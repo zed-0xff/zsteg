@@ -200,7 +200,7 @@ module ZSteg
           zi = Zlib::Inflate.new(Zlib::MAX_WBITS)
           x = zi.inflate data[idx..-1]
           # decompress OK
-          return Result::Zlib.new x, idx
+          return Result::Zlib.new x, idx if x.size > 2
         rescue Zlib::BufError
           # tried to decompress, but got EOF - need more data
           return Result::Zlib.new x, idx
