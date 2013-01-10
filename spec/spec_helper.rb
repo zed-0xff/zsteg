@@ -11,12 +11,17 @@ def each_sample glob="*.png"
 end
 
 def sample fname
-  File.join(SAMPLES_DIR, fname)
+  fname = File.join(SAMPLES_DIR, fname)
+  if block_given?
+    yield fname.sub(Dir.pwd+'/','')
+  end
+
+  fname
 end
 
 def cli *args
   @@cli_cache ||= {}
-  @@cli_cache[args] ||=
+  @@cli_cache[args.inspect] ||=
     begin
       args << "--no-color" unless args.any?{|x| x['color']}
       orig_stdout, out = $stdout, ""

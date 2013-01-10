@@ -6,7 +6,7 @@ doc
 .bundle
 pkg
 *.swp
-tmp
+tmp/*
 samples/*.bmp
 samples/hard
 samples/todo
