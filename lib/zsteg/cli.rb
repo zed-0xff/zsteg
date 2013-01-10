@@ -77,8 +77,11 @@ module ZSteg
 
       @actions = DEFAULT_ACTIONS if @actions.empty?
 
-      if argv.size == 2 && argv.last[','] && !File.exist?(argv.last)
-        @options.merge!(decode_param_string(argv.pop))
+      argv.each do |arg|
+        if arg[','] && !File.exist?(arg)
+          @options.merge!(decode_param_string(arg))
+          argv.delete arg
+        end
       end
 
       argv.each_with_index do |fname,idx|
