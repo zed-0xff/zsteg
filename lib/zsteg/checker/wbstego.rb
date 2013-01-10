@@ -2,22 +2,60 @@ module ZSteg
   class Checker
     module WBStego
 
-      class Result < IOStruct.new "a3a3a*", :size, :ext, :data, :even, :encrypted
+      ENCRYPTIONS = [
+        nil,         # 0
+        "Blowfish",  # 1
+        "Twofish",   # 2
+        "CAST128",   # 3
+        "Rijndael",  # 4
+      ]
+
+      class Result < IOStruct.new "a3a3a*", :size, :ext, :data, :even, :hdr, :enc, :mix, :controlbyte
+        attr_accessor :color
+
         def initialize *args
           super
           if self.size.is_a?(String)
             self.size = (self.size[0,3] + "\x00").unpack('V')[0]
           end
           self.even ||= false
-          self.encrypted ||= false
+          #self.encrypted ||= false
+          if ext[0,2] == "\x00\xff"
+            # wbStego 4.x header
+            self.hdr  = data[0,ext[2].ord] # 3rd ext byte is hdr len
+            self.data = data[hdr.size..-1]
+            self.ext  = nil                # encrypted files have no ext
+            self.enc  = ENCRYPTIONS[hdr[0].ord] || "unknown ##{hdr[0].ord}"
+          elsif (cb=ext[0].ord) & 0xc0 != 0
+            # wbStego 2.x/3.x controlbyte
+            self.controlbyte = ext[0]
+            self.data = ext[1..-1] + data
+            self.ext  = nil                # have ext but its encrypted/mixed with data
+            self.mix  = true if cb & 0x40 != 0
+            self.enc  = "wbStego 2.x/3.x" if cb & 0x80 != 0
+          end
         end
 
         def to_s
-          if encrypted
-            "maybe wbStego encrypted data, size=#{size}".gray
+          s = inspect.
+              sub("#<struct #{self.class.to_s}", "<wbStego").
+              gsub(/, \w+=nil/,'')
+
+          color = @color
+
+          if ext && !valid_ext?
+            s.sub!(data.inspect, data[0,10].inspect+"...") if data && data.size>13
+            color ||= :gray
           else
-            inspect.sub("#<struct #{self.class.to_s}", "<wbStego").bright_red
+            s.sub!(data.inspect, data[0,10].inspect+"...") if data && data.size>13 && enc
+            color ||= :bright_red
           end
+          s.send(color)
+        end
+
+        # XXX require that file extension be 7-bit ASCII
+        def valid_ext?
+          ext =~ /\A[\x20-\x7e]+\Z/ && !ext['*'] && !ext['?']
         end
       end
 
@@ -54,10 +92,15 @@ module ZSteg
         def check data, params = {}
           return if data.size < 4
           return if params[:bit_order] != :lsb
+
+          force_color = nil
+
           if params[:image].format == :bmp
             return if params[:order] !~ /b/i
           else
-            return if params[:channels].size != 3
+            # PNG
+            return if Array(params[:channels]).join != 'bgr'
+            force_color = :gray if params[:order] != 'xY'
           end
 
           size1 = (data[0,3] + "\x00").unpack('V')[0]
@@ -73,7 +116,7 @@ module ZSteg
 
           size2 = (data[3,3] + "\x00").unpack('V')[0]
 #          p [size1, size2, avail_size]
-          if size2 < avail_size
+          if size2 < avail_size && size2 > 0
             spacing = 1.0*avail_size/(size2+5) - 1
 #            puts "[d] spacing=#{spacing}"
             if spacing > 0
@@ -96,14 +139,10 @@ module ZSteg
           # no even distribution
           #return unless valid_ext?(data[3,3])
           result ||= Result.read(data)
-          result.encrypted = !valid_ext?(result.ext)
+          result.color = force_color if result && force_color
           result
         end
 
-        # XXX require that file extension be 7-bit ASCII
-        def valid_ext? ext
-          ext =~ /\A[\x20-\x7e]+\Z/ && !ext['*'] && !ext['?']
-        end
       end
     end
   end

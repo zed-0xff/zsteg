@@ -18,6 +18,7 @@ def cli *args
   @@cli_cache ||= {}
   @@cli_cache[args] ||=
     begin
+      args << "--no-color" unless args.any?{|x| x['color']}
       orig_stdout, out = $stdout, ""
       begin
         $stdout = StringIO.new(out)
@@ -25,7 +26,7 @@ def cli *args
       ensure
         $stdout = orig_stdout
       end
-      out
+      out.strip
     end
 end
 
