@@ -70,25 +70,25 @@ Examples
     [.] 1b,bgr,lsb,xy .. text: "MF_WIhf>"
     [.] 2b,g,lsb,xy   .. text: "VHello, third kitten is Bessy"
 
-### wbStego simple
-
-    # zsteg wbsteg_noenc.bmp 1b,lsb,bY -v
-
-    [.] 1b,lsb,bY     .. <wbStego size=22, ext="txt", data="SuperSecretMessage\n", even=false>
-        00000000: 16 00 00 74 78 74 53 75  70 65 72 53 65 63 72 65  |...txtSuperSecre|
-        00000010: 74 4d 65 73 73 61 67 65  0a                       |tMessage.       |
-
 ### wbStego even distributed
 
-    # zsteg wbsteg_noenc_even.bmp 1b,lsb,bY -v
+    # zsteg wbstego/wbsteg_noenc_even.bmp 1b,lsb,bY -v
 
-    [.] 1b,lsb,bY     .. <wbStego size=22, ext="txt", data="SuperSecretMessage\n", even=true>
+    [.] 1b,lsb,bY     .. <wbStego size=22, data="xtSuperSecretMessage\n", even=true, mix=true, controlbyte="t">
         00000000: 51 00 00 16 00 00 74 0d  b5 78 1e a1 39 74 e8 38  |Q.....t..x..9t.8|
         00000010: 53 c6 56 94 75 d1 a5 70  84 c8 27 65 fe 08 72 35  |S.V.u..p..'e..r5|
         00000020: 1f 3e 53 5d a7 65 8b 6e  3b 63 6b 1d bf 72 ee 27  |.>S].e.n;ck..r.'|
         00000030: 65 8d ee 82 74 da 8d 4d  b3 8a 06 65 7e f8 73 9c  |e...t..M...e~.s.|
         00000040: 36 0c 73 aa bd 61 67 29  37 67 5f 0b 06 65 1f a4  |6.s..ag)7g_..e..|
         00000050: 0a a1 f8 35                                       |...5            |
+
+### wbStego encrypted
+
+    # zsteg wbstego/wbsteg_blowfish_pass_1.bmp 1b,lsb,bY -v
+
+    [.] 1b,lsb,bY     .. <wbStego size=26, data="\rC\xF5\xBF#\xFF[6\e\xB3"..., even=false, hdr="\x01", enc="Blowfish">
+        00000000: 1a 00 00 00 ff 01 01 0d  43 f5 bf 23 ff 5b 36 1b  |........C..#.[6.|
+        00000010: b3 17 42 4a 3f ba eb c7  ee 9c d7 7a 2b           |..BJ?......z+   |
 
 ### zlib
 
