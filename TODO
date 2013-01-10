@@ -1,6 +1,6 @@
 [ ] make 'extract' cmd stream its data directly to stdout
 [ ] gzip
-[*] wbStego
+[ ] wbStego: 4bpp/8bpp BMP
 [ ] openstego
 [ ] tmp/steg*/*.bmp
 [ ] 4bpp/8bpp BMP
