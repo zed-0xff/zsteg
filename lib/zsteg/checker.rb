@@ -30,11 +30,20 @@ module ZSteg
       check_extradata
       check_metadata
 
-      case params[:order].to_s.downcase
-      when /all/
-        params[:order] = %w'xy yx XY YX Xy yX xY Yx'
-      when /auto/
-        params[:order] = @image.format == :bmp ? %w'bY xY' : 'xy'
+      if @image.format == :bmp
+        case params[:order].to_s.downcase
+        when /all/
+          params[:order] = %w'bY xY xy yx XY YX Xy yX Yx'
+        when /auto/
+          params[:order] = %w'bY xY'
+        end
+      else
+        case params[:order].to_s.downcase
+        when /all/
+          params[:order] = %w'xy yx XY YX Xy yX xY Yx'
+        when /auto/
+          params[:order] = 'xy'
+        end
       end
 
       Array(params[:order]).uniq.each do |order|
