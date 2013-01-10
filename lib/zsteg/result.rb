@@ -50,7 +50,7 @@ module ZSteg
         /DBase 3 data/i               => :gray
       }
       COLORMAP_WORD = {
-        /bitmap|jpeg|pdf|zip|rar|7z/i => :bright_red,
+        /bitmap|jpeg|pdf|zip|rar|7-?z/i => :bright_red,
       }
 
       def to_s
