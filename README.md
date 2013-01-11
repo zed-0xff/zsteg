@@ -18,6 +18,7 @@ Detects:
  * zlib-compressed data
  * [OpenStego](http://openstego.sourceforge.net/)
  * [Camouflage 1.2.1](http://camouflage.unfiction.com/)
+ * [LSB with The Eratosthenes set](http://wiki.cedricbonhomme.org/security:steganography)
 
 
 Usage
@@ -33,6 +34,8 @@ Usage
         -b, --bits N                     number of bits (1..8), single value or '1,3,5' or '1-8'
             --lsb                        least significant BIT comes first
             --msb                        most significant BIT comes first
+        -P, --prime                      analyze/extract only prime bytes/pixels
+        -a, --all                        try all known methods
         -o, --order X                    pixel iteration order (default: 'auto')
                                          valid values: ALL,xy,yx,XY,YX,xY,Xy,bY,...
         -E, --extract NAME               extract specified payload, NAME is like '1b,rgb,lsb'
@@ -51,30 +54,27 @@ Examples
 
     # zsteg flower_rgb3.png
 
-    [.] 1b,g,msb,xy   .. text: "05"
-    [.] 1b,b,lsb,xy   .. text: "vs"
-    [.] 2b,g,lsb,xy   .. text: "\"zfx"
-    [.] 3b,rgb,lsb,xy .. text: "SuperSecretMessage"
+    3b,rgb,lsb,xy       .. text: "SuperSecretMessage"
 
 ### Multi-result file
 
     # zsteg cats.png
 
-    [.] meta F        .. ["Z" repeated 14999985 times]
-    [.] meta C        .. text: "Fourth and last cat is Luke"
-    [.] meta A        .. [same as "meta F"]
-    [.] meta date:create.. text: "2012-03-15T23:32:46+07:00"
-    [.] meta date:modify.. text: "2012-03-15T23:32:14+07:00"
-    [.] 1b,r,lsb,xy   .. text: "Second cat is Marussia"
-    [.] 1b,g,lsb,xy   .. text: "Good, but look a bit deeper..."
-    [.] 1b,bgr,lsb,xy .. text: "MF_WIhf>"
-    [.] 2b,g,lsb,xy   .. text: "VHello, third kitten is Bessy"
+    meta F              .. ["Z" repeated 14999985 times]
+    meta C              .. text: "Fourth and last cat is Luke"
+    meta A              .. [same as "meta F"]
+    meta date:create    .. text: "2012-03-15T23:32:46+07:00"
+    meta date:modify    .. text: "2012-03-15T23:32:14+07:00"
+    1b,r,lsb,xy         .. text: "Second cat is Marussia"
+    1b,g,lsb,xy         .. text: "Good, but look a bit deeper..."
+    1b,bgr,lsb,xy       .. text: "MF_WIhf>"
+    2b,g,lsb,xy         .. text: "VHello, third kitten is Bessy"
 
 ### wbStego even distributed
 
     # zsteg wbstego/wbsteg_noenc_even.bmp 1b,lsb,bY -v
 
-    [.] 1b,lsb,bY     .. <wbStego size=22, data="xtSuperSecretMessage\n", even=true, mix=true, controlbyte="t">
+    1b,lsb,bY           .. <wbStego size=22, data="xtSuperSecretMessage\n", even=true, mix=true, controlbyte="t">
         00000000: 51 00 00 16 00 00 74 0d  b5 78 1e a1 39 74 e8 38  |Q.....t..x..9t.8|
         00000010: 53 c6 56 94 75 d1 a5 70  84 c8 27 65 fe 08 72 35  |S.V.u..p..'e..r5|
         00000020: 1f 3e 53 5d a7 65 8b 6e  3b 63 6b 1d bf 72 ee 27  |.>S].e.n;ck..r.'|
@@ -86,7 +86,7 @@ Examples
 
     # zsteg wbstego/wbsteg_blowfish_pass_1.bmp 1b,lsb,bY -v
 
-    [.] 1b,lsb,bY     .. <wbStego size=26, data="\rC\xF5\xBF#\xFF[6\e\xB3"..., even=false, hdr="\x01", enc="Blowfish">
+    1b,lsb,bY           .. <wbStego size=26, data="\rC\xF5\xBF#\xFF[6\e\xB3"..., even=false, hdr="\x01", enc="Blowfish">
         00000000: 1a 00 00 00 ff 01 01 0d  43 f5 bf 23 ff 5b 36 1b  |........C..#.[6.|
         00000010: b3 17 42 4a 3f ba eb c7  ee 9c d7 7a 2b           |..BJ?......z+   |
 
@@ -94,7 +94,7 @@ Examples
 
     # zsteg ndh2k12_sp113.bmp -b 1 -o yx -v
 
-    [.] 1b,rgb,lsb,yx .. zlib: data="%PDF-1.4\n%\xC3\xA4\xC3\xBC\xC3\xB6\xC3\x9F\n2 0 obj\n<</Length 3 0 R/Filter/FlateDecode>>\nstream\nx\x9C\x8DT\xC9n\xDB@\f\xBD\xCFW\xF0\x1C \x13\x92\xB3\x03\x86\x80\xC8K\xD1\xDE\\\b\xE8\xA1\xE8)K\x8B\xA2n\x91\\\xF2\xFB!5Zl\xD5v\v\x01\xD4\x90C\xBE\xF7\x86\x1A\n-\xC1\x9By\x01\x94'\x94`=d\xCF\xF0\xFA\x04_n\xE0\xF7\x10Gx\xFDn\xDA\xCE\xB0\x8F6\x80s$Y\xDD#\xDC\xED\b\x1CC\xF7\xBCBBF\x87^\xDE\xA1\xE9~\x9Amg\xF6\x8BZ\xCAYj", offset=4
+    1b,rgb,lsb,yx       .. zlib: data="%PDF-1.4\n%\xC3\xA4\xC3\xBC\xC3\xB6\xC3\x9F\n2 0 obj\n<</Length 3 0 R/Filter/FlateDecode>>\nstream\nx\x9C\x8DT\xC9n\xDB@\f\xBD\xCFW\xF0\x1C \x13\x92\xB3\x03\x86\x80\xC8K\xD1\xDE\\\b\xE8\xA1\xE8)K\x8B\xA2n\x91\\\xF2\xFB!5Zl\xD5v\v\x01\xD4\x90C\xBE\xF7\x86\x1A\n-\xC1\x9By\x01\x94'\x94`=d\xCF\xF0\xFA\x04_n\xE0\xF7\x10Gx\xFDn\xDA\xCE\xB0\x8F6\x80s$Y\xDD#\xDC\xED\b\x1CC\xF7\xBCBBF\x87^\xDE\xA1\xE9~\x9Amg\xF6\x8BZ\xCAYj", offset=4
         00000000: 00 02 eb 9b 78 9c d4 b9  65 54 24 cc 92 36 58 b8  |....x...eT$..6X.|
         00000010: d3 68 e3 ee ee 4e e3 ee  ee 0e 85 bb 3b dd 68 23  |.h...N......;.h#|
         00000020: 8d bb bb bb 3b 8d bb bb  3b 34 ee 6e 1f ef 7b ef  |....;...;4.n..{.|

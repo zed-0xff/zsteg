@@ -3,8 +3,6 @@ require 'optparse'
 module ZSteg
   class CLI
     DEFAULT_ACTIONS = %w'check'
-    DEFAULT_LIMIT   = 256
-    DEFAULT_ORDER   = 'auto'
 
     def initialize argv = ARGV
       @argv = argv
@@ -14,9 +12,8 @@ module ZSteg
       @actions = []
       @options = {
         :verbose => 0,
-        :limit => DEFAULT_LIMIT,
-        :bits  => [1,2,3,4],
-        :order => DEFAULT_ORDER
+        :limit => Checker::DEFAULT_LIMIT,
+        :order => Checker::DEFAULT_ORDER
       }
       optparser = OptionParser.new do |opts|
         opts.banner = "Usage: zsteg [options] filename.png [param_string]"
@@ -28,7 +25,7 @@ module ZSteg
         ){ |x| @options[:channels] = x.split(',') }
 
         opts.on("-l", "--limit N", Integer,
-                "limit bytes checked, 0 = no limit (default: #{DEFAULT_LIMIT})"
+                "limit bytes checked, 0 = no limit (default: #{@options[:limit]})"
         ){ |n| @options[:limit] = n }
 
         opts.on("-b", "--bits N", /[\d,-]+/,
@@ -47,8 +44,17 @@ module ZSteg
           @options[:bit_order] = :msb
         end
 
+        opts.on "-P", "--prime", "analyze/extract only prime bytes/pixels" do
+          @options[:prime] = true
+        end
+
+        opts.on "-a", "--all", "try all known methods" do
+          @options[:prime] = :all
+          @options[:order] = :all
+        end
+
         opts.on("-o", "--order X", /all|auto|[bxy,]+/i,
-                "pixel iteration order (default: '#{DEFAULT_ORDER}')",
+                "pixel iteration order (default: '#{@options[:order]}')",
                 "valid values: ALL,xy,yx,XY,YX,xY,Xy,bY,...",
         ){ |x| @options[:order] = x.split(',') }
 
@@ -89,7 +95,7 @@ module ZSteg
           puts if idx > 0
           puts "[.] #{fname}".green
         end
-        @fname = fname
+        next unless @img=load_image(fname)
 
         @actions.each do |action|
           if action.is_a?(Array)
@@ -104,6 +110,16 @@ module ZSteg
       # prevents a 'Broken pipe - <STDOUT> (Errno::EPIPE)' message
     end
 
+    def load_image fname
+      if File.directory?(fname)
+        puts "[?] #{fname} is a directory".yellow
+      else
+        ZPNG::Image.load(fname)
+      end
+    rescue ZPNG::Exception, Errno::ENOENT
+      puts "[!] #{$!.inspect}".red
+    end
+
     def decode_param_string s
       h = {}
       s.split(',').each do |x|
@@ -115,9 +131,11 @@ module ZSteg
         when /(\d)b/
           h[:bits] = $1.to_i
         when /\A[rgba]+\Z/
-          h[:channels] = [x] #.split('')
+          h[:channels] = [x]
         when /\Axy|yx|yb|by\Z/i
           h[:order] = x
+        when 'prime'
+          h[:prime] = true
         else
           raise "uknown param #{x.inspect}"
         end
@@ -129,19 +147,18 @@ module ZSteg
     # actions
 
     def check
-      Checker.new(@fname, @options).check
+      Checker.new(@img, @options).check
     end
 
     def extract name
       if ['extradata', 'data after IEND'].include?(name)
-        img = ZPNG::Image.load(@fname)
-        print img.extradata
+        print @img.extradata
         return
       end
 
       h = decode_param_string name
-      h[:limit] = @options[:limit] if @options[:limit] != DEFAULT_LIMIT
-      print Extractor.new(@fname, @options).extract(h)
+      h[:limit] = @options[:limit] if @options[:limit] != Checker::DEFAULT_LIMIT
+      print Extractor.new(@img, @options).extract(h)
     end
 
   end

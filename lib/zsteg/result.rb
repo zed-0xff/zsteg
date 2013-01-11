@@ -22,8 +22,19 @@ module ZSteg
     end
 
     class Text < Struct.new(:text, :offset)
+      def one_char?
+        (text =~ /\A(.)\1+\Z/m) == 0
+      end
+
       def to_s
-        "text: ".gray + (offset == 0 ? text.inspect.bright_red : text.inspect)
+        "text: ".gray +
+          if one_char?
+            "[#{text[0].inspect} repeated #{text.size} times]".gray
+          elsif offset == 0
+            text.inspect.bright_red
+          else
+            text.inspect
+          end
       end
     end
 
@@ -32,6 +43,9 @@ module ZSteg
 
     # part of data is text
     class PartialText < Text; end
+
+    # unicode text
+    class UnicodeText < Text; end
 
     class Zlib < Struct.new(:data, :offset)
       def to_s
@@ -42,44 +56,6 @@ module ZSteg
     class OneChar < Struct.new(:char, :size)
       def to_s
         "[#{char.inspect} repeated #{size} times]".gray
-      end
-    end
-
-    class FileCmd < Struct.new(:title, :data)
-      COLORMAP_TEXT = {
-        /DBase 3 data/i               => :gray
-      }
-      COLORMAP_WORD = {
-        /bitmap|jpeg|pdf|zip|rar|7-?z/i => :bright_red,
-      }
-
-      def to_s
-        if title[/UTF-8 Unicode text/i]
-          begin
-            t = data.force_encoding("UTF-8").encode("UTF-32LE").encode("UTF-8")
-          rescue
-            t = data.force_encoding('binary')
-          end
-          return "utf8: " + t
-        end
-        COLORMAP_TEXT.each do |re,color|
-          return colorize(color) if title[re]
-        end
-        title.downcase.split.each do |word|
-          COLORMAP_WORD.each do |re,color|
-            return colorize(color) if title.index(re) == 0
-          end
-        end
-        colorize(:yellow)
-      end
-
-      def colorize color
-        if color == :gray
-          # gray whole string
-          "file: #{title}".send(color)
-        else
-          "file: " + title.send(color)
-        end
       end
     end
 

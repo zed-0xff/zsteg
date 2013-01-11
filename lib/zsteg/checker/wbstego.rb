@@ -112,6 +112,10 @@ module ZSteg
             end
           return if size1 == 0 || size1 > avail_size
 
+          # check if too many zeroes, prevent false positive
+          nzeroes = data[3..-1].count("\x00")
+          return if nzeroes > 10 && data.size-3-nzeroes < 4
+
           result = nil
 
           size2 = (data[3,3] + "\x00").unpack('V')[0]

@@ -4,6 +4,7 @@
 [ ] openstego
 [ ] tmp/steg*/*.bmp
 [ ] 4bpp/8bpp BMP
+[ ] http://search.cpan.org/~nwclark/Acme-Steganography-Image-Png-0.06/Png.pm
 
 [+] auto pixel order for BMP
 [+] BMP
@@ -11,4 +12,4 @@
 
 [ ] detect AES from http://punkroy.drque.net/PNG_Steganography/Steganography5.php
 [?] http://tobyinkster.co.uk/article/steg-encode/
-[ ] Sieve of Eratosthenes: http://wiki.cedricbonhomme.org/security:steganography
+[+] Sieve of Eratosthenes: http://wiki.cedricbonhomme.org/security:steganography

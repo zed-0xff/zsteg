@@ -18,6 +18,7 @@ Detects:
  * zlib-compressed data
  * [OpenStego](http://openstego.sourceforge.net/)
  * [Camouflage 1.2.1](http://camouflage.unfiction.com/)
+ * [LSB with The Eratosthenes set](http://wiki.cedricbonhomme.org/security:steganography)
 
 
 Usage

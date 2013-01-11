@@ -3,9 +3,13 @@ require 'zlib'
 
 module ZSteg
   class Checker
-    attr_accessor :params, :channels, :verbose
+    attr_accessor :params, :channels, :verbose, :results
 
-    MIN_TEXT_LENGTH = 8
+    MIN_TEXT_LENGTH      = 8
+    MIN_WHOLETEXT_LENGTH = 6           # when entire data is a text
+    DEFAULT_BITS         = [1,2,3,4]
+    DEFAULT_ORDER        = 'auto'
+    DEFAULT_LIMIT        = 256         # number of checked bytes, 0 = no limit
 
     # image can be either filename or ZPNG::Image
     def initialize image, params = {}
@@ -19,9 +23,33 @@ module ZSteg
         else
           %w'r g b rgb bgr'
         end
-      @verbose = params[:verbose] || 0
+      @verbose = params[:verbose] || -2
       @file_cmd = FileCmd.new
+      @results = []
+
+      @params[:bits]  ||= DEFAULT_BITS
+      @params[:order] ||= DEFAULT_ORDER
+      @params[:limit] ||= DEFAULT_LIMIT
     end
+
+    private
+
+    # catch Kernel#print for easier verbosity handling
+    def print *args
+      Kernel.print(*args) if @verbose >= 0
+    end
+
+    # catch Kernel#printf for easier verbosity handling
+    def printf *args
+      Kernel.printf(*args) if @verbose >= 0
+    end
+
+    # catch Kernel#puts for easier verbosity handling
+    def puts *args
+      Kernel.puts(*args) if @verbose >= 0
+    end
+
+    public
 
     def check
       @found_anything = false
@@ -47,13 +75,14 @@ module ZSteg
       end
 
       Array(params[:order]).uniq.each do |order|
-        Array(params[:bits]).uniq.each do |bits|
-          if order[/b/i]
-            # byte iterator does not need channels
-            check_channels nil, @params.merge( :bits => bits, :order => order )
-          else
-            channels.each do |c|
-              check_channels c, @params.merge( :bits => bits, :order => order )
+        (params[:prime] == :all ? [false,true] : [params[:prime]]).each do |prime|
+          Array(params[:bits]).uniq.each do |bits|
+            p1 = @params.merge :bits => bits, :order => order, :prime => prime
+            if order[/b/i]
+              # byte iterator does not need channels
+              check_channels nil, p1
+            else
+              channels.each{ |c| check_channels c, p1 }
             end
           end
         end
@@ -64,6 +93,8 @@ module ZSteg
       else
         puts "\r[=] nothing :(" + " "*20 # line cleanup
       end
+
+      @results
     ensure
       @file_cmd.stop!
     end
@@ -92,15 +123,21 @@ module ZSteg
         return
       end
 
-      title = ["#{params[:bits]}b",channels,params[:bit_order],params[:order]].compact.join(',')
+      title = [
+        "#{params[:bits]}b",
+        channels,
+        params[:bit_order],
+        params[:order],
+        params[:prime] ? 'prime' : nil
+      ].compact.join(',')
+
       show_title title
 
       p1 = params.clone
-      p1.delete :channel
       p1[:title] = title
 
       if channels
-        p1[:channels] = channels.split('')
+        p1[:channels] = channels.chars.to_a
         @max_hidden_size = p1[:channels].size*@image.width
       elsif params[:order] =~ /b/i
         # byte extractor
@@ -117,7 +154,7 @@ module ZSteg
     end
 
     def show_title title, color = :gray
-      printf "\r[.] %-14s.. ".send(color), title
+      printf "\r%-20s.. ".send(color), title
       $stdout.flush
     end
 
@@ -138,7 +175,9 @@ module ZSteg
       # TODO: store hash of data for large datas
       @cache[data] = params[:title]
 
-      result = data2result data, params
+      if result = data2result(data, params)
+        @results << result
+      end
 
       case verbose
       when -999..0
@@ -192,13 +231,13 @@ module ZSteg
         end
       end
 
-      if data =~ /\A[\x20-\x7e\r\n\t]+\Z/
+      if data.size >= MIN_WHOLETEXT_LENGTH && data =~ /\A[\x20-\x7e\r\n\t]+\Z/
         # whole ASCII
         return Result::WholeText.new(data, 0)
       end
 
-      if r = @file_cmd.check_data(data)
-        return Result::FileCmd.new(r, data)
+      if r = @file_cmd.data2result(data)
+        return r
       end
 
       # http://blog.w3challs.com/index.php?post/2012/03/25/NDH2k12-Prequals-We-are-looking-for-a-real-hacker-Wallpaper-image

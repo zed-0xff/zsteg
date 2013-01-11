@@ -20,7 +20,48 @@ module ZSteg
       'International EBCDIC text',
       'lif file',
       'AmigaOS bitmap font',
+      'a python script text executable' # common false positive
     ]
+
+    MIN_DATA_SIZE = 5
+
+    class Result < Struct.new(:title, :data)
+      COLORMAP_TEXT = {
+        /DBase 3 data/i               => :gray
+      }
+      COLORMAP_WORD = {
+        /bitmap|jpeg|pdf|zip|rar|7-?z/i => :bright_red,
+      }
+
+      def to_s
+        if title[/UTF-8 Unicode text/i]
+          begin
+            t = data.force_encoding("UTF-8").encode("UTF-32LE").encode("UTF-8")
+          rescue
+            t = data.force_encoding('binary')
+          end
+          return "utf8: " + t
+        end
+        COLORMAP_TEXT.each do |re,color|
+          return colorize(color) if title[re]
+        end
+        title.downcase.split.each do |word|
+          COLORMAP_WORD.each do |re,color|
+            return colorize(color) if title.index(re) == 0
+          end
+        end
+        colorize(:yellow)
+      end
+
+      def colorize color
+        if color == :gray
+          # gray whole string
+          "file: #{title}".send(color)
+        else
+          "file: " + title.send(color)
+        end
+      end
+    end
 
     def start!
       @stdin, @stdout, @stderr, @wait_thr = Open3.popen3("file -n -b -f -")
@@ -38,6 +79,27 @@ module ZSteg
       @tempfile.write data
       @tempfile.flush
       check_file @tempfile.path
+    end
+
+    # checks data and resurns Result, if any
+    def data2result data
+      return if data.size < MIN_DATA_SIZE
+
+      title = check_data data
+      return unless title
+
+      if title[/UTF-8 Unicode text/i]
+        begin
+          t = data.force_encoding("UTF-8")
+        rescue
+          t = data.force_encoding('binary')
+        end
+        if t.size >= Checker::MIN_TEXT_LENGTH
+          ZSteg::Result::UnicodeText.new(t,0)
+        end
+      else
+        Result.new(title,data)
+      end
     end
 
     def stop!

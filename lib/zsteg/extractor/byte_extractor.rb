@@ -5,20 +5,23 @@ module ZSteg
     module ByteExtractor
 
       def byte_extract params = {}
-        limit = params[:limit].to_i
-        limit = 2**32 if limit <= 0
-
         bits = params[:bits]
         raise "invalid bits value #{bits.inspect}" unless (1..8).include?(bits)
         mask = 2**bits - 1
 
+        if params[:prime]
+          pregenerate_primes(
+            :max   => @image.scanlines[0].size * @image.height,
+            :count => (@limit*8.0/bits).ceil
+          )
+        end
 
         data = ''.force_encoding('binary')
         a = []
-        byte_iterator(params[:order]) do |x,y|
+        byte_iterator(params) do |x,y|
           sl = @image.scanlines[y]
 
-          value = sl.decoded_bytes[x].ord
+          value = sl.decoded_bytes.getbyte(x)
           bits.times do |bidx|
             a << ((value & (1<<(bits-bidx-1))) == 0 ? 0 : 1)
           end
@@ -32,8 +35,8 @@ module ZSteg
             end
             #printf "[d] %02x %08b\n", byte, byte
             data << byte.chr
-            if data.size >= limit
-              print "[limit #{params[:limit]}]".gray if @verbose > 1
+            if data.size >= @limit
+              print "[limit #@limit]".gray if @verbose > 1
               break
             end
           end
@@ -51,7 +54,8 @@ module ZSteg
       # ...
       # 'xY': b=0,  y=MAX; b=1,    y=MAX; b=2,    y=MAX; ...
       # 'XY': b=MAX,y=MAX; b=MAX-1,y=MAX; b=MAX-2,y=MAX; ...
-      def byte_iterator type = nil
+      def byte_iterator params
+        type = params[:order]
         if type.nil? || type == 'auto'
           type = @image.format == :bmp ? 'bY' : 'by'
         end
@@ -59,6 +63,7 @@ module ZSteg
 
         sl0 = @image.scanlines.first
 
+        # XXX don't try to run it on interlaced PNGs!
         x0,x1,xstep =
           if type.index('b')
             [0, sl0.decoded_bytes.size-1, 1]
@@ -73,19 +78,31 @@ module ZSteg
             [@image.height-1, 0, -1]
           end
 
+        # cannot join these lines from ByteExtractor and ColorExtractor into
+        # one method for performance reason:
+        #   it will require additional yield() for EACH BYTE iterated
+
         if type[0,1].downcase == 'b'
           # ROW iterator
-          y0.step(y1,ystep) do |y|
-            x0.step(x1,xstep) do |x|
-              yield x,y
-            end
+          if params[:prime]
+            idx = 0
+            y0.step(y1,ystep){ |y| x0.step(x1,xstep){ |x|
+              yield(x,y) if @primes.include?(idx)
+              idx += 1
+            }}
+          else
+            y0.step(y1,ystep){ |y| x0.step(x1,xstep){ |x| yield(x,y) }}
           end
         else
           # COLUMN iterator
-          x0.step(x1,xstep) do |x|
-            y0.step(y1,ystep) do |y|
-              yield x,y
-            end
+          if params[:prime]
+            idx = 0
+            x0.step(x1,xstep){ |x| y0.step(y1,ystep){ |y|
+              yield(x,y) if @primes.include?(idx)
+              idx += 1
+            }}
+          else
+            x0.step(x1,xstep){ |x| y0.step(y1,ystep){ |y| yield(x,y) }}
           end
         end
       end
