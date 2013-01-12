@@ -1,5 +1,6 @@
 require 'stringio'
 require 'zlib'
+require 'set'
 
 module ZSteg
   class Checker
@@ -14,7 +15,7 @@ module ZSteg
     # image can be either filename or ZPNG::Image
     def initialize image, params = {}
       @params = params
-      @cache = {}
+      @cache = {}; @wastitles = Set.new
       @image = image.is_a?(ZPNG::Image) ? image : ZPNG::Image.load(image)
       @extractor = Extractor.new(@image, params)
       @channels = params[:channels] ||
@@ -123,30 +124,52 @@ module ZSteg
         return
       end
 
+      p1 = params.clone
+
+      show_bits = true
+      # channels is a String
+      if channels
+        p1[:channels] =
+          if channels[1] && channels[1] =~ /\A\d\Z/
+            # 'r3g2b3'
+            a=[]
+            cbits = 0
+            (channels.size/2).times do |i|
+              a << (t=channels[i*2,2])
+              cbits += t[1].to_i
+            end
+            show_bits = false
+            @max_hidden_size = cbits * @image.width
+            a
+          else
+            # 'rgb'
+            a = channels.chars.to_a
+            @max_hidden_size = a.size * @image.width * p1[:bits]
+            a
+          end
+        # p1[:channels] is an Array
+      elsif params[:order] =~ /b/i
+        # byte extractor
+        @max_hidden_size = @image.scanlines[0].decoded_bytes.size * p1[:bits]
+      else
+        raise "invalid params #{params.inspect}"
+      end
+      @max_hidden_size *= @image.height/8
+
       title = [
-        "#{params[:bits]}b",
+        show_bits ? "#{params[:bits]}b" : nil,
         channels,
         params[:bit_order],
         params[:order],
         params[:prime] ? 'prime' : nil
       ].compact.join(',')
 
+      return if @wastitles.include?(title)
+      @wastitles << title
+
       show_title title
 
-      p1 = params.clone
       p1[:title] = title
-
-      if channels
-        p1[:channels] = channels.chars.to_a
-        @max_hidden_size = p1[:channels].size*@image.width
-      elsif params[:order] =~ /b/i
-        # byte extractor
-        @max_hidden_size = @image.scanlines[0].decoded_bytes.size
-      else
-        raise "invalid params #{params.inspect}"
-      end
-      @max_hidden_size *= p1[:bits]*@image.height/8
-
       data = @extractor.extract p1
 
       @need_cr = !process_result(data, p1) # carriage return needed?

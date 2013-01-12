@@ -19,9 +19,9 @@ module ZSteg
         opts.banner = "Usage: zsteg [options] filename.png [param_string]"
         opts.separator ""
 
-        opts.on("-c", "--channels X", /[rgba,]+/,
+        opts.on("-c", "--channels X", /[rgba,1-8]+/,
                 "channels (R/G/B/A) or any combination, comma separated",
-                "valid values: r,g,b,a,rg,rgb,bgr,rgba,..."
+                "valid values: r,g,b,a,rg,bgr,rgba,r3g2b3,..."
         ){ |x| @options[:channels] = x.split(',') }
 
         opts.on("-l", "--limit N", Integer,
@@ -134,7 +134,7 @@ module ZSteg
         when /(\d)b/
           h[:bits] = $1.to_i
         when /\A[rgba]+\Z/
-          h[:channels] = x.chars.to_a
+          h[:channels] = [x]
         when /\Axy|yx|yb|by\Z/i
           h[:order] = x
         when 'prime'

@@ -7,9 +7,19 @@ module ZSteg
         channels = Array(params[:channels])
         #pixel_align = params[:pixel_align]
 
-        bits = params[:bits]
-        raise "invalid bits value #{bits.inspect}" unless (1..8).include?(bits)
-        mask = 2**bits - 1
+        ch_bits = []
+        case channels.first.size
+        when 1
+          # ['r', 'g', 'b']
+          bits = params[:bits]
+          raise "invalid bits value #{bits.inspect}" unless (1..8).include?(bits)
+          channels.each{ |c| ch_bits << [c[0],bits] }
+        when 2
+          # ['r3', 'g2', 'b3']
+          channels.each{ |c| ch_bits << [c[0],c[1].to_i] }
+        else
+          raise "invalid channels: #{channels.inspect}"
+        end
 
         if params[:prime]
           pregenerate_primes(
@@ -21,33 +31,34 @@ module ZSteg
         data = ''.force_encoding('binary')
         a = []
         #puts
-        coord_iterator(params) do |x,y|
-          color = @image[x,y]
+        catch :limit do
+          coord_iterator(params) do |x,y|
+            color = @image[x,y]
 
-          channels.each do |c|
-            value = color.send(c)
-            bits.times do |bidx|
-              a << ((value & (1<<(bits-bidx-1))) == 0 ? 0 : 1)
+            ch_bits.each do |c,bits|
+              value = color.send(c)
+              bits.times do |bidx|
+                a << ((value & (1<<(bits-bidx-1))) == 0 ? 0 : 1)
+              end
             end
-          end
-          #p [x,y,a.size,a]
+            #p [x,y,a.size,a]
 
-          # XXX need 'while' here
-          if a.size >= 8
-            byte = 0
-            #puts a.join
-            if params[:bit_order] == :msb
-              8.times{ |i| byte |= (a.shift<<i)}
-            else
-              8.times{ |i| byte |= (a.shift<<(7-i))}
+            while a.size >= 8
+              byte = 0
+              #puts a.join
+              if params[:bit_order] == :msb
+                8.times{ |i| byte |= (a.shift<<i)}
+              else
+                8.times{ |i| byte |= (a.shift<<(7-i))}
+              end
+              #printf "[d] %02x %08b\n", byte, byte
+              data << byte.chr
+              if data.size >= @limit
+                print "[limit #@limit]".gray if @verbose > 1
+                throw :limit
+              end
+              #a.clear if pixel_align
             end
-            #printf "[d] %02x %08b\n", byte, byte
-            data << byte.chr
-            if data.size >= @limit
-              print "[limit #@limit]".gray if @verbose > 1
-              break
-            end
-            #a.clear if pixel_align
           end
         end
         if params[:strip_tail_zeroes] != false && data[-1,1] == "\x00"

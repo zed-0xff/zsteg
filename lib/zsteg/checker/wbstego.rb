@@ -134,10 +134,10 @@ module ZSteg
                   error -= 1
                 end
               end
-#              puts "[d] r=#{r.inspect} (#{r.size})"
-              ext = r[0,3]
-              #return unless valid_ext?(ext)
-              result = Result.new(size2, ext, r[3..-1], true)
+              if r.size > 4
+                ext = r[0,3]
+                result = Result.new(size2, ext, r[3..-1], true)
+              end
             end
           end
           # no even distribution
