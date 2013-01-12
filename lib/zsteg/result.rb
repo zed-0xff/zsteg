@@ -24,6 +24,8 @@ module ZSteg
     class Text < Struct.new(:text, :offset)
       def one_char?
         (text =~ /\A(.)\1+\Z/m) == 0
+      rescue # invalid byte sequence in UTF-8
+        text.chars.to_a.uniq.size == 1 # ~10x slower than regexp
       end
 
       def to_s

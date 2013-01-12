@@ -47,6 +47,9 @@ module ZSteg
         opts.on "-P", "--prime", "analyze/extract only prime bytes/pixels" do
           @options[:prime] = true
         end
+#        opts.on "--pixel-align", "pixel-align hidden data (EasyBMP)" do
+#          @options[:pixel_align] = true
+#        end
 
         opts.on "-a", "--all", "try all known methods" do
           @options[:prime] = :all
@@ -131,7 +134,7 @@ module ZSteg
         when /(\d)b/
           h[:bits] = $1.to_i
         when /\A[rgba]+\Z/
-          h[:channels] = [x]
+          h[:channels] = x.chars.to_a
         when /\Axy|yx|yb|by\Z/i
           h[:order] = x
         when 'prime'

@@ -5,6 +5,7 @@
 [ ] tmp/steg*/*.bmp
 [ ] 4bpp/8bpp BMP
 [ ] http://search.cpan.org/~nwclark/Acme-Steganography-Image-Png-0.06/Png.pm
+[ ] http://easybmp.sourceforge.net/OldSteganography.html
 
 [+] auto pixel order for BMP
 [+] BMP

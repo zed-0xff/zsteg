@@ -5,6 +5,7 @@ module ZSteg
 
       def color_extract params = {}
         channels = Array(params[:channels])
+        #pixel_align = params[:pixel_align]
 
         bits = params[:bits]
         raise "invalid bits value #{bits.inspect}" unless (1..8).include?(bits)
@@ -19,6 +20,7 @@ module ZSteg
 
         data = ''.force_encoding('binary')
         a = []
+        #puts
         coord_iterator(params) do |x,y|
           color = @image[x,y]
 
@@ -28,9 +30,12 @@ module ZSteg
               a << ((value & (1<<(bits-bidx-1))) == 0 ? 0 : 1)
             end
           end
+          #p [x,y,a.size,a]
 
+          # XXX need 'while' here
           if a.size >= 8
             byte = 0
+            #puts a.join
             if params[:bit_order] == :msb
               8.times{ |i| byte |= (a.shift<<i)}
             else
@@ -42,6 +47,7 @@ module ZSteg
               print "[limit #@limit]".gray if @verbose > 1
               break
             end
+            #a.clear if pixel_align
           end
         end
         if params[:strip_tail_zeroes] != false && data[-1,1] == "\x00"
