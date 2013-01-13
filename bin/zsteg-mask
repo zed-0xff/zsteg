@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__) + '/../lib'))
+require 'zsteg'
+require 'zsteg/mask_cli'
+
+ZSteg::MaskCLI.new.run
