@@ -10,3 +10,5 @@ require 'zsteg/result'
 require 'zsteg/file_cmd'
 
 require 'zsteg/checker/wbstego'
+
+require 'zsteg/masker'

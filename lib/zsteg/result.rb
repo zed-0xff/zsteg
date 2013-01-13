@@ -33,6 +33,10 @@ module ZSteg
           if one_char?
             "[#{text[0].inspect} repeated #{text.size} times]".gray
           elsif offset == 0
+            # first byte of data is also first char of text
+            text.inspect.bright_red
+          elsif text.size > 10 && text[' '] && text =~ /\A[a-z0-9 .,:!_-]+\Z/i
+            # text is ASCII with spaces
             text.inspect.bright_red
           else
             text.inspect
@@ -50,8 +54,11 @@ module ZSteg
     class UnicodeText < Text; end
 
     class Zlib < Struct.new(:data, :offset)
+      MAX_SHOW_SIZE = 100
       def to_s
-        "zlib: data=#{data.inspect.bright_red}, offset=#{offset}"
+        x = data
+        x=x[0,MAX_SHOW_SIZE] + "..." if x.size > MAX_SHOW_SIZE
+        "zlib: data=#{x.inspect.bright_red}, offset=#{offset}, size=#{data.size}"
       end
     end
 

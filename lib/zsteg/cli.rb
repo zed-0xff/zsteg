@@ -98,7 +98,7 @@ module ZSteg
           puts if idx > 0
           puts "[.] #{fname}".green
         end
-        next unless @img=load_image(fname)
+        next unless @img=load_image(@fname=fname)
 
         @actions.each do |action|
           if action.is_a?(Array)

@@ -58,6 +58,7 @@ module ZSteg
 
       check_extradata
       check_metadata
+      check_imagedata
 
       if @image.format == :bmp
         case params[:order].to_s.downcase
@@ -98,6 +99,11 @@ module ZSteg
       @results
     ensure
       @file_cmd.stop!
+    end
+
+    def check_imagedata
+      h = { :title => "imagedata", :show_title => true }
+      process_result @image.imagedata, h
     end
 
     def check_extradata
@@ -206,6 +212,7 @@ module ZSteg
       when -999..0
         # verbosity=0: only show result if anything interesting found
         if result && !result.is_a?(Result::OneChar)
+          show_title params[:title] if params[:show_title]
           puts result
           return true
         else
@@ -217,6 +224,7 @@ module ZSteg
       end
 
       # verbosity>1: always show hexdump
+      show_title params[:title] if params[:show_title]
 
       if params[:special]
         puts result.is_a?(Result::PartialText) ? nil : result
@@ -259,13 +267,16 @@ module ZSteg
         return Result::WholeText.new(data, 0)
       end
 
-      if r = @file_cmd.data2result(data)
+      # XXX TODO refactor params hack
+      if !params.key?(:no_check_file) && (r = @file_cmd.data2result(data))
         return r
       end
 
+      # try to find zlib
       # http://blog.w3challs.com/index.php?post/2012/03/25/NDH2k12-Prequals-We-are-looking-for-a-real-hacker-Wallpaper-image
       # http://blog.w3challs.com/public/ndh2k12_prequalls/sp113.bmp
-      if idx = data.index(/\x78[\x9c\xda\x01]/)
+      # XXX TODO refactor params hack
+      if !params.key?(:no_check_zlib) && (idx = data.index(/\x78[\x9c\xda\x01]/))
         begin
 #          x = Zlib::Inflate.inflate(data[idx,4096])
           zi = Zlib::Inflate.new(Zlib::MAX_WBITS)
