@@ -34,5 +34,23 @@ module ZSteg
         break if @primes.size >= count
       end
     end
+
+    def bits2masks bits
+      masks = []
+      if (1..8).include?(bits)
+        # number of bits
+        bits.times do |i|
+          masks << (1<<(bits-i-1))
+        end
+      else
+        # mask
+        bits &= 0xff
+        8.times do |i|
+          mask = (1<<(bits-i-1))
+          masks << mask if (bits & mask) != 0
+        end
+      end
+      masks
+    end
   end
 end

@@ -28,13 +28,19 @@ module ZSteg
                 "limit bytes checked, 0 = no limit (default: #{@options[:limit]})"
         ){ |n| @options[:limit] = n }
 
-        opts.on("-b", "--bits N", /[\d,-]+/,
-                "number of bits (1..8), single value or '1,3,5' or '1-8'") do |n|
-          if n['-']
-            @options[:bits] = Range.new(*n.split('-').map(&:to_i)).to_a
-          else
-            @options[:bits] = n.split(',').map(&:to_i)
+        opts.on("-b", "--bits N", "number of bits, single int value or '1,3,5' or range '1-8'",
+                "advanced: specify individual bits like '00001110' or '0x88'"
+        ) do |x|
+          a = []
+          x.split(',').each do |x1|
+            if x1['-']
+              t = x1.split('-')
+              a << Range.new(parse_bits(t[0]), parse_bits(t[1])).to_a
+            else
+              a << parse_bits(x1)
+            end
           end
+          @options[:bits] = a.flatten.uniq
         end
 
         opts.on "--lsb", "least significant BIT comes first" do
@@ -123,6 +129,21 @@ module ZSteg
       puts "[!] #{$!.inspect}".red
     end
 
+    def parse_bits x
+      case x
+        when '1', 1             # catch NOT A BINARY MASK early
+          1
+        when /^0x[0-9a-f]+$/i   # hex,     mask
+          0x100 + x.to_i(16)
+        when /^(?:0b)?[01]+$/i  # binary,  mask
+          0x100 + x.to_i(2)
+        when /^\d+$/            # decimal, number of bits
+          x.to_i
+        else
+          raise "invalid bits value: #{x.inspect}"
+      end
+    end
+
     def decode_param_string s
       h = {}
       s.split(',').each do |x|
@@ -131,8 +152,8 @@ module ZSteg
           h[:bit_order] = :lsb
         when 'msb'
           h[:bit_order] = :msb
-        when /(\d)b/
-          h[:bits] = $1.to_i
+        when /^(\d)b$/, /^b(\d)$/
+          h[:bits] = parse_bits($1)
         when /\A[rgba]+\Z/
           h[:channels] = [x]
         when /\Axy|yx|yb|by\Z/i

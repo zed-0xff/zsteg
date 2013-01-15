@@ -132,6 +132,11 @@ module ZSteg
 
       p1 = params.clone
 
+      # number of bits
+      # equals to params[:bits] if in range 1..8
+      # otherwise equals to number of 1's, like 0b1000_0001
+      nbits = p1[:bits] <= 8 ? p1[:bits] : (p1[:bits]&0xff).to_s(2).count("1")
+
       show_bits = true
       # channels is a String
       if channels
@@ -150,20 +155,36 @@ module ZSteg
           else
             # 'rgb'
             a = channels.chars.to_a
-            @max_hidden_size = a.size * @image.width * p1[:bits]
+            @max_hidden_size = a.size * @image.width * nbits
             a
           end
         # p1[:channels] is an Array
       elsif params[:order] =~ /b/i
         # byte extractor
-        @max_hidden_size = @image.scanlines[0].decoded_bytes.size * p1[:bits]
+        @max_hidden_size = @image.scanlines[0].decoded_bytes.size * nbits
       else
         raise "invalid params #{params.inspect}"
       end
       @max_hidden_size *= @image.height/8
 
+      bits_tag =
+        if show_bits
+          if params[:bits] > 0x100
+            if params[:bits].to_s(2) =~ /(1{1,8})$/
+              # mask => number of bits
+              "b#{$1.size}"
+            else
+              # mask
+              "b#{(params[:bits]&0xff).to_s(2)}"
+            end
+          else
+            # number of bits
+            "b#{params[:bits]}"
+          end
+        end
+
       title = [
-        show_bits ? "#{params[:bits]}b" : nil,
+        bits_tag,
         channels,
         params[:bit_order],
         params[:order],

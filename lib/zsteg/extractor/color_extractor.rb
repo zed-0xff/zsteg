@@ -7,24 +7,25 @@ module ZSteg
         channels = Array(params[:channels])
         #pixel_align = params[:pixel_align]
 
-        ch_bits = []
+        ch_masks = []
         case channels.first.size
         when 1
           # ['r', 'g', 'b']
-          bits = params[:bits]
-          raise "invalid bits value #{bits.inspect}" unless (1..8).include?(bits)
-          channels.each{ |c| ch_bits << [c[0],bits] }
+          channels.each{ |c| ch_masks << [c[0], bits2masks(params[:bits])] }
         when 2
           # ['r3', 'g2', 'b3']
-          channels.each{ |c| ch_bits << [c[0],c[1].to_i] }
+          channels.each{ |c| ch_masks << [c[0], bits2masks(c[1].to_i)] }
         else
           raise "invalid channels: #{channels.inspect}"
         end
 
+        # total number of bits = sum of all channels bits
+        nbits = ch_masks.map{ |x| x[1].size }.inject(&:+)
+
         if params[:prime]
           pregenerate_primes(
             :max   => @image.width * @image.height,
-            :count => (@limit*8.0/bits/channels.size).ceil
+            :count => (@limit*8.0/nbits/channels.size).ceil
           )
         end
 
@@ -35,10 +36,10 @@ module ZSteg
           coord_iterator(params) do |x,y|
             color = @image[x,y]
 
-            ch_bits.each do |c,bits|
+            ch_masks.each do |c,masks|
               value = color.send(c)
-              bits.times do |bidx|
-                a << ((value & (1<<(bits-bidx-1))) == 0 ? 0 : 1)
+              masks.each do |mask|
+                a << ((value & mask) == 0 ? 0 : 1)
               end
             end
             #p [x,y,a.size,a]

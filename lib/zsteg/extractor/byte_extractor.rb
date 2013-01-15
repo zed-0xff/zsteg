@@ -5,14 +5,12 @@ module ZSteg
     module ByteExtractor
 
       def byte_extract params = {}
-        bits = params[:bits]
-        raise "invalid bits value #{bits.inspect}" unless (1..8).include?(bits)
-        mask = 2**bits - 1
+        masks = bits2masks params[:bits]
 
         if params[:prime]
           pregenerate_primes(
             :max   => @image.scanlines[0].size * @image.height,
-            :count => (@limit*8.0/bits).ceil
+            :count => (@limit*8.0/masks.size).ceil
           )
         end
 
@@ -22,8 +20,8 @@ module ZSteg
           sl = @image.scanlines[y]
 
           value = sl.decoded_bytes.getbyte(x)
-          bits.times do |bidx|
-            a << ((value & (1<<(bits-bidx-1))) == 0 ? 0 : 1)
+          masks.each do |mask|
+            a << ((value & mask) == 0 ? 0 : 1)
           end
 
           if a.size >= 8
