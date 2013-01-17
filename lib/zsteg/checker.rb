@@ -253,7 +253,9 @@ module ZSteg
         puts result
       end
       if data.size > 0 && !result.is_a?(Result::OneChar) && !result.is_a?(Result::WholeText)
-        print ZPNG::Hexdump.dump(data){ |x| x.prepend(" "*4) }
+        limit = (params[:limit] || @params[:limit]).to_i
+        t = limit > 0 ? data[0,limit] : data
+        print ZPNG::Hexdump.dump(t){ |x| x.prepend(" "*4) }
       end
       true
     end

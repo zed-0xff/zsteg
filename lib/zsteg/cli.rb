@@ -32,6 +32,7 @@ module ZSteg
                 "advanced: specify individual bits like '00001110' or '0x88'"
         ) do |x|
           a = []
+          x = '1-8' if x == 'all'
           x.split(',').each do |x1|
             if x1['-']
               t = x1.split('-')
