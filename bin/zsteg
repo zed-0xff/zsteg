@@ -1,7 +1,19 @@
 #!/usr/bin/env ruby
 
-$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__) + '/../lib'))
-require 'zsteg'
-require 'zsteg/cli'
+base = File.expand_path('../lib', File.dirname(__FILE__))
+$:.unshift(base)
 
-ZSteg::CLI.new.run
+require File.join(base, 'zsteg')
+
+a = File.basename(__FILE__).downcase.scan(/\w+/) - %w'zsteg rb'
+if a.empty?
+  # base CLI
+  require File.join(base, 'zsteg', 'cli')
+  ZSteg::CLI.new.run
+else
+  # secondary CLI
+  klass = a.map(&:capitalize).join
+  req = a.join('_')
+  require File.join(base, 'zsteg', 'cli', req)
+  ZSteg::CLI.const_get(klass).new.run
+end

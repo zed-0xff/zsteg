@@ -1,7 +1,6 @@
 $:.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'zsteg'
 require 'zsteg/cli'
-require 'zsteg/mask_cli'
 
 SAMPLES_DIR = File.expand_path("../samples", File.dirname(__FILE__))
 
@@ -33,7 +32,14 @@ def cli *args
   args.flatten!
   @@cli_cache[args.inspect] ||=
     begin
-      klass = args.first.is_a?(Class) ? args.shift : ZSteg::CLI
+      klass =
+        if args.first.is_a?(Symbol)
+          cli_name = args.shift.to_s
+          require "zsteg/cli/#{cli_name}"
+          ZSteg::CLI.const_get(cli_name.capitalize)
+        else
+          ZSteg::CLI
+        end
       args << "--no-color" unless args.any?{|x| x['color']}
       orig_stdout, out = $stdout, ""
       begin

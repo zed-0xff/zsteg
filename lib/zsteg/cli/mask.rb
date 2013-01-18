@@ -3,7 +3,9 @@ require 'set'
 require 'digest/md5'
 
 module ZSteg
-  class MaskCLI
+  class CLI; end
+
+  class CLI::Mask
     DEFAULT_ACTIONS = %w'mask'
 
     COMMON_MASKS = [
