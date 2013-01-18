@@ -1,7 +1,7 @@
 require 'optparse'
 
 module ZSteg
-  class CLI
+  class CLI::Cli
     DEFAULT_ACTIONS = %w'check'
 
     def initialize argv = ARGV

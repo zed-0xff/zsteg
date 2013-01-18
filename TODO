@@ -9,6 +9,8 @@
 [ ] zsteg-mask: normalize all to white
 [ ] stego by pixels of single color (hackquest on wiki)
 
+[ ] CLI: self-describe
+
 [+] auto pixel order for BMP
 [+] BMP
 [+] zlib

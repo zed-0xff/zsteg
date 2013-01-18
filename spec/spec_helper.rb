@@ -1,6 +1,5 @@
 $:.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'zsteg'
-require 'zsteg/cli'
 
 SAMPLES_DIR = File.expand_path("../samples", File.dirname(__FILE__))
 

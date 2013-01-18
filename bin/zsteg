@@ -5,15 +5,4 @@ $:.unshift(base)
 
 require File.join(base, 'zsteg')
 
-a = File.basename(__FILE__).downcase.scan(/\w+/) - %w'zsteg rb'
-if a.empty?
-  # base CLI
-  require File.join(base, 'zsteg', 'cli')
-  ZSteg::CLI.new.run
-else
-  # secondary CLI
-  klass = a.map(&:capitalize).join
-  req = a.join('_')
-  require File.join(base, 'zsteg', 'cli', req)
-  ZSteg::CLI.const_get(klass).new.run
-end
+ZSteg::CLI.run
