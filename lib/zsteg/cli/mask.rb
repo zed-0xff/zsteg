@@ -234,7 +234,8 @@ module ZSteg
 
     def masks2fname masks
       masks = masks.dup.delete_if{ |k,v| !CHANNELS.include?(k) }
-      bname = @fname.sub(/#{Regexp.escape(File.extname(@fname))}$/,'')
+      ext   = File.extname(@fname)
+      bname = @fname.chomp(ext)
       color = nil
       raise "TODO" if masks.values.all?(&:nil?)
       if masks.values.uniq.size == 1
@@ -256,10 +257,11 @@ module ZSteg
             else nil
             end
         end
-        tail = a.join(".")
+        tail = a.join("_")
       end
 
-      fname = [bname, tail, "png"].join('.')
+      # we always export as PNG
+      fname = [bname, "mask_#{tail}", "png"].join('.')
       fname = File.join(@options[:dir], File.basename(fname)) if @options[:dir]
       [fname, color]
     end
