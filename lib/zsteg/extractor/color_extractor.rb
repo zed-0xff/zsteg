@@ -16,6 +16,11 @@ module ZSteg
           # ['r3', 'g2', 'b3']
           channels.each{ |c| ch_masks << [c[0], bits2masks(c[1].to_i)] }
         else
+          raise "invalid channels: #{channels.inspect}" if channels.size != 1
+          t = channels.first
+          if t =~ /\A[rgba]+\Z/
+            return color_extract(params.merge(:channels => t.split('')))
+          end
           raise "invalid channels: #{channels.inspect}"
         end
 
