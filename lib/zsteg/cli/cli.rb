@@ -22,7 +22,11 @@ module ZSteg
         opts.on("-c", "--channels X", /[rgba,1-8]+/,
                 "channels (R/G/B/A) or any combination, comma separated",
                 "valid values: r,g,b,a,rg,bgr,rgba,r3g2b3,..."
-        ){ |x| @options[:channels] = x.split(',') }
+        ) do |x|
+          @options[:channels] = x.split(',')
+          # specifying channels on command line disables extra checks
+          @options[:extra_checks] = false
+        end
 
         opts.on("-l", "--limit N", Integer,
                 "limit bytes checked, 0 = no limit (default: #{@options[:limit]})"
@@ -42,6 +46,8 @@ module ZSteg
             end
           end
           @options[:bits] = a.flatten.uniq
+          # specifying bits on command line disables extra checks
+          @options[:extra_checks] = false
         end
 
         opts.on "--lsb", "least significant BIT comes first" do
@@ -53,6 +59,8 @@ module ZSteg
 
         opts.on "-P", "--prime", "analyze/extract only prime bytes/pixels" do
           @options[:prime] = true
+          # specifying prime on command line disables extra checks
+          @options[:extra_checks] = false
         end
 #        opts.on "--pixel-align", "pixel-align hidden data (EasyBMP)" do
 #          @options[:pixel_align] = true
@@ -62,6 +70,8 @@ module ZSteg
           @options[:prime] = :all
           @options[:order] = :all
           @options[:bits]  = (1..8).to_a
+          # specifying --all on command line explicitly enables extra checks
+          @options[:extra_checks] = true
         end
 
         opts.on("-o", "--order X", /all|auto|[bxy,]+/i,
@@ -169,6 +179,19 @@ module ZSteg
       h
     end
 
+    def _extract_data name
+      case name
+      when /scanline/
+        Checker::ScanlineChecker.check_image @img
+      when 'extradata', 'data after IEND'
+        @img.extradata
+      else
+        h = decode_param_string name
+        h[:limit] = @options[:limit] if @options[:limit] != Checker::DEFAULT_LIMIT
+        Extractor.new(@img, @options).extract(h)
+      end
+    end
+
     ###########################################################################
     # actions
 
@@ -177,14 +200,7 @@ module ZSteg
     end
 
     def extract name
-      if ['extradata', 'data after IEND'].include?(name)
-        print @img.extradata
-        return
-      end
-
-      h = decode_param_string name
-      h[:limit] = @options[:limit] if @options[:limit] != Checker::DEFAULT_LIMIT
-      print Extractor.new(@img, @options).extract(h)
+      print _extract_data(name)
     end
 
   end

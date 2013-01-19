@@ -11,6 +11,7 @@ module ZSteg
     DEFAULT_BITS         = [1,2,3,4]
     DEFAULT_ORDER        = 'auto'
     DEFAULT_LIMIT        = 256         # number of checked bytes, 0 = no limit
+    DEFAULT_EXTRA_CHECKS = true
 
     # image can be either filename or ZPNG::Image
     def initialize image, params = {}
@@ -31,6 +32,8 @@ module ZSteg
       @params[:bits]  ||= DEFAULT_BITS
       @params[:order] ||= DEFAULT_ORDER
       @params[:limit] ||= DEFAULT_LIMIT
+
+      @extra_checks = params.fetch(:extra_checks, DEFAULT_EXTRA_CHECKS)
     end
 
     private
@@ -56,9 +59,11 @@ module ZSteg
       @found_anything = false
       @file_cmd.start!
 
-      check_extradata
-      check_metadata
-      check_imagedata
+      if @extra_checks
+        check_extradata
+        check_metadata
+        check_imagedata
+      end
 
       if @image.format == :bmp
         case params[:order].to_s.downcase
@@ -112,6 +117,13 @@ module ZSteg
         title = "data after IEND"
         show_title title, :bright_red
         process_result @image.extradata, :special => true, :title => title
+      end
+
+      if data = ScanlineChecker.check_image(@image, @params)
+        @found_anything = true
+        title = "scanline extradata"
+        show_title title, :bright_red
+        process_result data, :special => true, :title => title
       end
     end
 
