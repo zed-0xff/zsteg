@@ -61,6 +61,7 @@ module ZSteg
         opts.on "-a", "--all", "try all known methods" do
           @options[:prime] = :all
           @options[:order] = :all
+          @options[:bits]  = (1..8).to_a
         end
 
         opts.on("-o", "--order X", /all|auto|[bxy,]+/i,
