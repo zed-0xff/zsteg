@@ -11,10 +11,10 @@ module ZSteg
         case channels.first.size
         when 1
           # ['r', 'g', 'b']
-          channels.each{ |c| ch_masks << [c[0], bits2masks(params[:bits])] }
+          channels.each{ |c| ch_masks << [c[0], bit_indexes(params[:bits])] }
         when 2
           # ['r3', 'g2', 'b3']
-          channels.each{ |c| ch_masks << [c[0], bits2masks(c[1].to_i)] }
+          channels.each{ |c| ch_masks << [c[0], bit_indexes(c[1].to_i)] }
         else
           raise "invalid channels: #{channels.inspect}" if channels.size != 1
           t = channels.first
@@ -41,10 +41,10 @@ module ZSteg
           coord_iterator(params) do |x,y|
             color = @image[x,y]
 
-            ch_masks.each do |c,masks|
+            ch_masks.each do |c,bidxs|
               value = color.send(c)
-              masks.each do |mask|
-                a << ((value & mask) == 0 ? 0 : 1)
+              bidxs.each do |bidx|
+                a << value[bidx]
               end
             end
             #p [x,y,a.size,a]

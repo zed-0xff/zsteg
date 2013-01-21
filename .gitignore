@@ -7,6 +7,6 @@ doc
 pkg
 *.swp
 tmp/*
-samples/*.bmp
+*.bmp
 samples/hard
 samples/todo

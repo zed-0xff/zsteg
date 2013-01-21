@@ -35,22 +35,22 @@ module ZSteg
       end
     end
 
-    def bits2masks bits
-      masks = []
+    def bit_indexes bits
       if (1..8).include?(bits)
         # number of bits
-        bits.times do |i|
-          masks << (1<<(bits-i-1))
-        end
+        # 1 => [0]
+        # ...
+        # 8 => [7,6,5,4,3,2,1,0]
+        bits.times.to_a.reverse
       else
         # mask
-        bits &= 0xff
+        mask = bits & 0xff
+        r = []
         8.times do |i|
-          mask = (1<<(bits-i-1))
-          masks << mask if (bits & mask) != 0
+          r << i if mask[i] == 1
         end
+        r.reverse
       end
-      masks
     end
   end
 end

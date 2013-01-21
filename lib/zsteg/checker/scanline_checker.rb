@@ -29,14 +29,24 @@ module ZSteg
           else
             # extract a number of bits from each scanline
             nbytes = (nbits/8.0).ceil # number of whole bytes, rounded up
-            mask0 = 2**nbits-1
-            masks = []; a = []
-            nbits.times{ |i| masks << (1<<(nbits-i-1)) }
+            mask = 2**nbits-1
+            a = []
             scanlines.each do |sl|
               bytes = sl.decoded_bytes[-nbytes,nbytes]
               value = 0
+              # convert 1+ bytes into one big integer
               bytes.each_byte{ |b| value = (value<<8) + b }
-              masks.each{ |mask| a << ((value & mask) == 0 ? 0 : 1) }
+
+              # remove unwanted bits
+              value &= mask
+
+              # fix[n] -> 0, 1
+              # Bit Reference - Returns the nth bit in the binary representation of fix
+              # http://www.ruby-doc.org/core-1.9.3/Fixnum.html#method-i-5B-5D
+              #
+              # also "<<" + "reverse!" is 30% faster than "unshift"
+              nbits.times{ |i| a << value[i] }
+              a.reverse!
 
               while a.size >= 8
                 byte = 0
