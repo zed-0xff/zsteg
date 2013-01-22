@@ -1,4 +1,5 @@
 require 'optparse'
+require 'stringio'
 require 'set'
 
 module ZSteg
@@ -131,6 +132,11 @@ module ZSteg
         return
       end
 
+      sl = @image.scanlines.first
+      @bpp = sl.bpp
+      @old_significant_sl_bytes = (sl.width*sl.bpp/8.0).ceil
+      @old_total_sl_bytes       = sl.size
+
       if @options[:heights]
         @options[:heights].each do |h|
           t = 1.0*@image.width*@image.height/h
@@ -146,7 +152,7 @@ module ZSteg
         end
       else
         # enum all
-        2.upto(@image.width*@image.height-1) do |w|
+        2.upto(@image.width*@image.height/2) do |w|
           h = @image.width*@image.height/w
           _reflow w,h
         end
@@ -157,7 +163,7 @@ module ZSteg
 
     def _gen_fname w,h
       ext = @fname[/\.\w{3}$/].to_s
-      fname = @fname.chomp(ext) + ".reflow_#{w}x#{h}" + ext
+      fname = "%s.reflow_%05dx%05d%s" % [@fname.chomp(ext), w, h, ext]
       fname = File.join(@options[:dir], File.basename(fname)) if @options[:dir]
       fname
     end
@@ -167,6 +173,15 @@ module ZSteg
       raise "already written to #{fname}" if @wasfiles.include?(fname)
       @wasfiles << fname
 
+      new_significant_sl_bytes = (w*@bpp/8.0).ceil
+      padding = "\x00" * (4-new_significant_sl_bytes%4)
+      padding = "" if padding.size == 4
+
+#      p @old_significant_sl_bytes
+#      p @old_total_sl_bytes
+#      p new_significant_sl_bytes
+#      p padding
+
       puts "[.] #{fname} .."
       File.open(@fname, "rb") do |fi|
         File.open(fname, "wb") do |fo|
@@ -174,13 +189,50 @@ module ZSteg
           # 4 bytes - the size of the BMP file in bytes
           # 2 bytes - reserved
           # 2 bytes - reserved
+          fo.write fi.read(2+4+2+2)
+
           # 4 bytes - imagedata offset
-          # 4 bytes - BITMAPINFOHEADER.biSize - sizeof(BITMAPINFOHEADER)
-          data = fi.read(2+4+2+2+4+4)
-          fo.write data              # copy header
-          fi.read(4*2)               # read old size into nowhere
-          fo.write([w,h].pack("V2")) # write new size
-          IO.copy_stream(fi,fo)      # effectively copy remaining bytes
+          data = fi.read(4)
+          imagedata_offset = data.unpack('V').first
+          fo.write data
+
+          # 4 bytes - BITMAPINFOHEADER.biSize    (keep)
+          # 4 bytes - BITMAPINFOHEADER.biWidth   (rewrite)
+          # 4 bytes - BITMAPINFOHEADER.biHeight  (rewrite)
+          data = fi.read(4+4+4)
+          fo.write(data[0,4] + [w,h].pack("V2")) # write new size
+
+          # copy remaining header bytes
+          fo.write fi.read(imagedata_offset-fi.tell)
+
+          # FIXME: if scanline sizes differ in BITS, not bytes...
+
+          # scanline padding needs to be respected...
+          imagedata = StringIO.new
+          @image.height.times do
+            data = fi.read @old_total_sl_bytes
+            imagedata << data[0, @old_significant_sl_bytes]
+            #p data[@old_significant_sl_bytes..-1]
+          end
+          imagedata << fi.read # read extradata, if any
+
+          imagedata.rewind
+          imagedata_start = fo.tell
+          h.times do
+            fo << imagedata.read(new_significant_sl_bytes)
+            fo << padding
+          end
+          file_size = fo.tell
+          imagedata_size = fo.tell - imagedata_start
+          fo << imagedata.read # write extradata, if any
+
+          # write new BITMAPFILEHEADER.bfSize
+          fo.seek 2
+          fo.write [file_size].pack('V')
+
+          # write new BITMAPINFOHEADER.biSizeImage
+          fo.seek 14+20 # BITMAPFILEHEADER::SIZE + 20
+          fo.write [imagedata_size].pack('V')
         end
       end
     end
