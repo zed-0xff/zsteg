@@ -145,6 +145,9 @@ module ZSteg
           result ||= Result.read(data)
           result.color = force_color if result && force_color
           result
+
+        rescue
+          STDERR.puts "[!] wbStego: #{$!.inspect}".red
         end
 
       end

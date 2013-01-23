@@ -62,6 +62,10 @@ module ZSteg
           # specifying prime on command line disables extra checks
           @options[:extra_checks] = false
         end
+        opts.on "--invert", "invert bits (XOR 0xff)" do
+          @options[:invert] = true
+        end
+
 #        opts.on "--pixel-align", "pixel-align hidden data (EasyBMP)" do
 #          @options[:pixel_align] = true
 #        end
@@ -81,6 +85,30 @@ module ZSteg
 
         opts.on "-E", "--extract NAME", "extract specified payload, NAME is like '1b,rgb,lsb'" do |x|
           @actions << [:extract, x]
+        end
+
+        opts.separator ""
+
+        opts.on "--[no-]file", "use 'file' command to detect data type (default: YES)" do |x|
+          @options[:file] = x
+        end
+
+        # TODO
+#        opts.on "--[no-]binwalk", "use 'binwalk' command to detect data type (default: NO)" do |x|
+#          @options[:binwalk] = x
+#        end
+
+        opts.on "--no-strings", "disable ASCII strings finding (default: enabled)" do |x|
+          @options[:strings] = false
+        end
+        opts.on "-s", "--strings X", %w'first all longest none no',
+          "ASCII strings find mode: first, all, longest, none",
+          "(default: first)" do |x|
+          @options[:strings] = x[0] == 'n' ? false : x.downcase.to_sym
+        end
+        opts.on "-n", "--min-str-len X", Integer,
+          "minimum string length (default: #{Checker::DEFAULT_MIN_STR_LEN})" do |x|
+          @options[:min_str_len] = x
         end
 
         opts.separator ""

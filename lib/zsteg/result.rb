@@ -42,6 +42,10 @@ module ZSteg
             text.inspect
           end
       end
+
+      def self.from_matchdata m
+        self.new m[0], m.begin(0)
+      end
     end
 
     # whole data is text
@@ -52,15 +56,6 @@ module ZSteg
 
     # unicode text
     class UnicodeText < Text; end
-
-    class Zlib < Struct.new(:data, :offset)
-      MAX_SHOW_SIZE = 100
-      def to_s
-        x = data
-        x=x[0,MAX_SHOW_SIZE] + "..." if x.size > MAX_SHOW_SIZE
-        "zlib: data=#{x.inspect.bright_red}, offset=#{offset}, size=#{data.size}"
-      end
-    end
 
     class OneChar < Struct.new(:char, :size)
       def to_s

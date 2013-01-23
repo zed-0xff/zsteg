@@ -1,3 +1,4 @@
+#coding: utf-8
 require 'stringio'
 require 'zlib'
 require 'set'
@@ -6,12 +7,11 @@ module ZSteg
   class Checker
     attr_accessor :params, :channels, :verbose, :results
 
-    MIN_TEXT_LENGTH      = 8
-    MIN_WHOLETEXT_LENGTH = 6           # when entire data is a text
     DEFAULT_BITS         = [1,2,3,4]
     DEFAULT_ORDER        = 'auto'
     DEFAULT_LIMIT        = 256         # number of checked bytes, 0 = no limit
     DEFAULT_EXTRA_CHECKS = true
+    DEFAULT_MIN_STR_LEN  = 8
 
     # image can be either filename or ZPNG::Image
     def initialize image, params = {}
@@ -32,6 +32,14 @@ module ZSteg
       @params[:bits]  ||= DEFAULT_BITS
       @params[:order] ||= DEFAULT_ORDER
       @params[:limit] ||= DEFAULT_LIMIT
+
+      if @params[:min_str_len]
+        @min_str_len = @min_wholetext_len = @params[:min_str_len]
+      else
+        @min_str_len = DEFAULT_MIN_STR_LEN
+        @min_wholetext_len = @min_str_len - 2
+      end
+      @strings_re = /[\x20-\x7e\r\n\t]{#@min_str_len,}/
 
       @extra_checks = params.fetch(:extra_checks, DEFAULT_EXTRA_CHECKS)
     end
@@ -101,6 +109,11 @@ module ZSteg
         puts "\r[=] nothing :(" + " "*20 # line cleanup
       end
 
+      if @extra_checks
+        Analyzer.new(@image).analyze!
+      end
+
+      # return everything found if this method was called from some code
       @results
     ensure
       @file_cmd.stop!
@@ -211,6 +224,10 @@ module ZSteg
       p1[:title] = title
       data = @extractor.extract p1
 
+      if p1[:invert]
+        data.size.times{ |i| data.setbyte(i, data.getbyte(i)^0xff) }
+      end
+
       @need_cr = !process_result(data, p1) # carriage return needed?
       @found_anything ||= !@need_cr
     end
@@ -218,6 +235,21 @@ module ZSteg
     def show_title title, color = :gray
       printf "\r%-20s.. ".send(color), title
       $stdout.flush
+    end
+
+    def show_result result, params
+      case result
+      when Array
+        result.each_with_index do |r,idx|
+          # empty title for multiple results from same title
+          show_title(" ") if idx > 0
+          puts r
+        end
+      when nil, false
+        # do nothing?
+      else
+        puts result
+      end
     end
 
     # returns true if was any output
@@ -246,7 +278,7 @@ module ZSteg
         # verbosity=0: only show result if anything interesting found
         if result && !result.is_a?(Result::OneChar)
           show_title params[:title] if params[:show_title]
-          puts result
+          show_result result, params
           return true
         else
           return false
@@ -262,7 +294,7 @@ module ZSteg
       if params[:special]
         puts result.is_a?(Result::PartialText) ? nil : result
       else
-        puts result
+        show_result result, params
       end
       if data.size > 0 && !result.is_a?(Result::OneChar) && !result.is_a?(Result::WholeText)
         limit = (params[:limit] || @params[:limit]).to_i
@@ -297,40 +329,45 @@ module ZSteg
         end
       end
 
-      if data.size >= MIN_WHOLETEXT_LENGTH && data =~ /\A[\x20-\x7e\r\n\t]+\Z/
+      if data.size >= @min_wholetext_len && data =~ /\A[\x20-\x7e\r\n\t]+\Z/
         # whole ASCII
         return Result::WholeText.new(data, 0)
       end
 
-      # XXX TODO refactor params hack
-      if !params.key?(:no_check_file) && (r = @file_cmd.data2result(data))
+      if params.fetch(:file, true) && (r = @file_cmd.data2result(data))
         return r
       end
 
-      # try to find zlib
-      # http://blog.w3challs.com/index.php?post/2012/03/25/NDH2k12-Prequals-We-are-looking-for-a-real-hacker-Wallpaper-image
-      # http://blog.w3challs.com/public/ndh2k12_prequalls/sp113.bmp
-      # XXX TODO refactor params hack
-      if !params.key?(:no_check_zlib) && (idx = data.index(/\x78[\x9c\xda\x01]/))
-        begin
-#          x = Zlib::Inflate.inflate(data[idx,4096])
-          zi = Zlib::Inflate.new(Zlib::MAX_WBITS)
-          x = zi.inflate data[idx..-1]
-          # decompress OK
-          return Result::Zlib.new x, idx if x.size > 2
-        rescue Zlib::BufError
-          # tried to decompress, but got EOF - need more data
-          return Result::Zlib.new x, idx
-        rescue Zlib::DataError, Zlib::NeedDict
-          # not a zlib
-        ensure
-          zi.close if zi && !zi.closed?
-        end
+      if r = Checker::Zlib.check_data(data)
+        return r
       end
 
-      if (r=data[/[\x20-\x7e\r\n\t]{#{MIN_TEXT_LENGTH},}/])
-        return Result::PartialText.new(r, data.index(r))
+      case params.fetch(:strings, :first)
+      when :all
+        r=[]
+        data.scan(@strings_re) do
+          r << Result::PartialText.from_matchdata($~)
+        end
+        return r if r.any?
+      when :first
+        if data[@strings_re]
+          return Result::PartialText.from_matchdata($~)
+        end
+      when :longest
+        r=[]
+        data.scan(@strings_re){ r << $~ }
+        return Result::PartialText.from_matchdata(r.sort_by(&:size).last) if r.any?
       end
+
+      # utf-8 string matching, may be slow, may throw exceptions
+#      begin
+#        t = data.
+#          encode('UTF-16', 'UTF-8', :invalid => :replace, :replace => '').
+#          encode!('UTF-8', 'UTF-16')
+#        r = t.scan(/\p{Word}{#{MIN_TEXT_LENGTH},}/)
+#        r if r.any?
+#      rescue
+#      end
     end
 
     private
