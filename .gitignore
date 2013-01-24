@@ -10,3 +10,4 @@ tmp/*
 *.bmp
 samples/hard
 samples/todo
+writers/*.png

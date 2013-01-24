@@ -125,11 +125,23 @@ module ZSteg
     end
 
     def check_extradata
-      if @image.extradata
+      # accessing imagedata implicitly unpacks zlib stream
+      # zlib stream may contain extradata
+      if @image.imagedata.size > (t=@image.scanlines.map(&:size).inject(&:+))
         @found_anything = true
-        title = "data after IEND"
+        data = @image.imagedata[t..-1]
+        title = "extradata:imagedata"
         show_title title, :bright_red
-        process_result @image.extradata, :special => true, :title => title
+        process_result data, :special => true, :title => title
+      end
+
+      if @image.extradata.any?
+        @found_anything = true
+        @image.extradata.each_with_index do |data,idx|
+          title = "extradata:#{idx}"
+          show_title title, :bright_red
+          process_result data, :special => true, :title => title
+        end
       end
 
       if data = ScanlineChecker.check_image(@image, @params)
@@ -286,9 +298,10 @@ module ZSteg
       when 1
         # verbosity=1: if anything interesting found show result & hexdump
         return false unless result
+      else
+        # verbosity>1: always show hexdump
       end
 
-      # verbosity>1: always show hexdump
       show_title params[:title] if params[:show_title]
 
       if params[:special]
@@ -304,6 +317,9 @@ module ZSteg
       true
     end
 
+    CAMOUFLAGE_SIG1 = "\x00\x00".force_encoding('binary')
+    CAMOUFLAGE_SIG2 = "\xed\xcd\x01".force_encoding('binary')
+
     def data2result data, params
       if one_char?(data)
         return Result::OneChar.new(data[0,1], data.size)
@@ -315,8 +331,11 @@ module ZSteg
         return Result::OpenStego.read(io)
       end
 
-      if data[0,2] == "\x00\x00" && data[3,3] == "\xed\xcd\x01"
-        return Result::Camouflage.new(data)
+      # only in extradata
+      if params[:title]['extradata']
+        if data[0,2] == CAMOUFLAGE_SIG1 && data[3,3] == CAMOUFLAGE_SIG2
+          return Result::Camouflage.new(data)
+        end
       end
 
       # only BMP & 1-bit-per-channel

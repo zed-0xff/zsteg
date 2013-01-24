@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
-gem 'zpng', ">= 0.2.2"
+gem 'zpng', ">= 0.2.3"
 gem "iostruct"
 
 group :development do

@@ -84,6 +84,7 @@ module ZSteg
         ){ |x| @options[:order] = x.split(',') }
 
         opts.on "-E", "--extract NAME", "extract specified payload, NAME is like '1b,rgb,lsb'" do |x|
+          @options[:verbose] = -2 # silent ZPNG warnings
           @actions << [:extract, x]
         end
 
@@ -163,7 +164,7 @@ module ZSteg
       if File.directory?(fname)
         puts "[?] #{fname} is a directory".yellow
       else
-        ZPNG::Image.load(fname)
+        ZPNG::Image.load(fname, :verbose => @options[:verbose]+1)
       end
     rescue ZPNG::Exception, Errno::ENOENT
       puts "[!] #{$!.inspect}".red
@@ -211,8 +212,13 @@ module ZSteg
       case name
       when /scanline/
         Checker::ScanlineChecker.check_image @img
-      when 'extradata', 'data after IEND'
-        @img.extradata
+      when /extradata:imagedata/
+        @img.imagedata[@img.scanlines.map(&:size).inject(&:+)..-1]
+      when /extradata:(\d+)/
+        # accessing imagedata implicitly unpacks zlib stream
+        # zlib stream may contain extradata
+        @img.imagedata
+        @img.extradata[$1.to_i]
       else
         h = decode_param_string name
         h[:limit] = @options[:limit] if @options[:limit] != Checker::DEFAULT_LIMIT

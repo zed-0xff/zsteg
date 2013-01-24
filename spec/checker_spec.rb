@@ -30,13 +30,13 @@ describe Checker do
         end
 
         describe "results" do
-          it "should not have text results shorter than #{Checker::MIN_TEXT_LENGTH}" do
+          it "should not have text results shorter than #{Checker::DEFAULT_MIN_STR_LEN}" do
             @results.each do |result|
               case result
               when Result::WholeText
-                result.text.size.should(be >= Checker::MIN_WHOLETEXT_LENGTH, result.inspect)
+                result.text.size.should(be >= Checker::DEFAULT_MIN_STR_LEN-2, result.inspect)
               when Result::Text
-                result.text.size.should(be >= Checker::MIN_TEXT_LENGTH, result.inspect)
+                result.text.size.should(be >= Checker::DEFAULT_MIN_STR_LEN, result.inspect)
               end
             end
           end
