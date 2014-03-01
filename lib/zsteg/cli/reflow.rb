@@ -42,8 +42,12 @@ module ZSteg
 
         opts.separator ""
 
-        opts.on "-a", "--all", "try all possible sizes (default)" do
+        opts.on "-a", "--all", "try all possible sizes" do
           @options[:try_all] = true
+        end
+
+        opts.on "-r", "--rewrite", "just rewrite the header, keeping imagedata as-is" do
+          @options[:rewrite] = true
         end
 
         opts.separator ""
@@ -150,11 +154,20 @@ module ZSteg
           h = @image.width*@image.height/w
           _reflow w,h
         end
-      else
+      elsif @options[:try_all]
         # enum all
         2.upto(@image.width*@image.height/2) do |w|
           h = @image.width*@image.height/w
           _reflow w,h
+        end
+      else
+        # smart all
+        w = 4
+        loop do
+          h = @image.width*@image.height/w
+          break if h < 4
+          _reflow w,h
+          w += 1
         end
       end
     end
@@ -202,37 +215,41 @@ module ZSteg
           data = fi.read(4+4+4)
           fo.write(data[0,4] + [w,h].pack("V2")) # write new size
 
-          # copy remaining header bytes
-          fo.write fi.read(imagedata_offset-fi.tell)
+          if @options[:rewrite]
+            IO.copy_stream fi, fo
+          else
+            # copy remaining header bytes
+            fo.write fi.read(imagedata_offset-fi.tell)
 
-          # FIXME: if scanline sizes differ in BITS, not bytes...
+            # FIXME: if scanline sizes differ in BITS, not bytes...
 
-          # scanline padding needs to be respected...
-          imagedata = StringIO.new
-          @image.height.times do
-            data = fi.read @old_total_sl_bytes
-            imagedata << data[0, @old_significant_sl_bytes]
-            #p data[@old_significant_sl_bytes..-1]
+            # scanline padding needs to be respected...
+            imagedata = StringIO.new
+            @image.height.times do
+              data = fi.read @old_total_sl_bytes
+              imagedata << data[0, @old_significant_sl_bytes]
+              #p data[@old_significant_sl_bytes..-1]
+            end
+            imagedata << fi.read # read extradata, if any
+
+            imagedata.rewind
+            imagedata_start = fo.tell
+            h.times do
+              fo << imagedata.read(new_significant_sl_bytes)
+              fo << padding
+            end
+            file_size = fo.tell
+            imagedata_size = fo.tell - imagedata_start
+            fo << imagedata.read # write extradata, if any
+
+            # write new BITMAPFILEHEADER.bfSize
+            fo.seek 2
+            fo.write [file_size].pack('V')
+
+            # write new BITMAPINFOHEADER.biSizeImage
+            fo.seek 14+20 # BITMAPFILEHEADER::SIZE + 20
+            fo.write [imagedata_size].pack('V')
           end
-          imagedata << fi.read # read extradata, if any
-
-          imagedata.rewind
-          imagedata_start = fo.tell
-          h.times do
-            fo << imagedata.read(new_significant_sl_bytes)
-            fo << padding
-          end
-          file_size = fo.tell
-          imagedata_size = fo.tell - imagedata_start
-          fo << imagedata.read # write extradata, if any
-
-          # write new BITMAPFILEHEADER.bfSize
-          fo.seek 2
-          fo.write [file_size].pack('V')
-
-          # write new BITMAPINFOHEADER.biSizeImage
-          fo.seek 14+20 # BITMAPFILEHEADER::SIZE + 20
-          fo.write [imagedata_size].pack('V')
         end
       end
     end

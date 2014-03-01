@@ -112,6 +112,10 @@ module ZSteg
           @options[:min_str_len] = x
         end
 
+        opts.on "--shift N", Integer, "prepend N zero bits" do |x|
+          @options[:shift] = x
+        end
+
         opts.separator ""
         opts.on "-v", "--verbose", "Run verbosely (can be used multiple times)" do |v|
           @options[:verbose] += 1

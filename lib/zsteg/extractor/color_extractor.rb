@@ -35,8 +35,7 @@ module ZSteg
         end
 
         data = ''.force_encoding('binary')
-        a = []
-        #puts
+        a = [0]*params[:shift].to_i        # prepend :shift zero bits
         catch :limit do
           coord_iterator(params) do |x,y|
             color = @image[x,y]

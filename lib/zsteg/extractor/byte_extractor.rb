@@ -15,7 +15,7 @@ module ZSteg
         end
 
         data = ''.force_encoding('binary')
-        a = []
+        a = [0]*params[:shift].to_i        # prepend :shift zero bits
         byte_iterator(params) do |x,y|
           sl = @image.scanlines[y]
 

@@ -310,6 +310,8 @@ module ZSteg
         show_result result, params
       end
       if data.size > 0 && !result.is_a?(Result::OneChar) && !result.is_a?(Result::WholeText)
+        # newline if no results and want hexdump
+        puts if !result || result == []
         limit = (params[:limit] || @params[:limit]).to_i
         t = limit > 0 ? data[0,limit] : data
         print ZPNG::Hexdump.dump(t){ |x| x.prepend(" "*4) }
