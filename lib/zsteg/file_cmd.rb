@@ -94,7 +94,7 @@ module ZSteg
         rescue
           t = data.force_encoding('binary')
         end
-        if t.size >= Checker::MIN_TEXT_LENGTH
+        if t.size >= Checker::DEFAULT_MIN_STR_LEN
           ZSteg::Result::UnicodeText.new(t,0)
         end
       else

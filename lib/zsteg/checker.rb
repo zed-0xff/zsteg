@@ -385,7 +385,7 @@ module ZSteg
 #        t = data.
 #          encode('UTF-16', 'UTF-8', :invalid => :replace, :replace => '').
 #          encode!('UTF-8', 'UTF-16')
-#        r = t.scan(/\p{Word}{#{MIN_TEXT_LENGTH},}/)
+#        r = t.scan(/\p{Word}{#{DEFAULT_MIN_STR_LEN},}/)
 #        r if r.any?
 #      rescue
 #      end
