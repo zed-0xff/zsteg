@@ -1,3 +1,4 @@
+#coding: binary
 require 'optparse'
 require 'stringio'
 require 'set'
@@ -68,7 +69,11 @@ module ZSteg
           @options[:verbose] -= 1
         end
         opts.on "-C", "--[no-]color", "Force (or disable) color output (default: auto)" do |x|
-          Sickill::Rainbow.enabled = x
+          if defined?(Rainbow) && Rainbow.respond_to?(:enabled=)
+            Rainbow.enabled = x
+          else
+            Sickill::Rainbow.enabled = x
+          end
         end
       end
 

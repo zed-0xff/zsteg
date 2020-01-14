@@ -1,3 +1,4 @@
+#coding: binary
 module ZSteg
   class Checker
     module WBStego

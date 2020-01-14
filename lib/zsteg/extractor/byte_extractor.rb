@@ -1,3 +1,4 @@
+#coding: binary
 module ZSteg
   class Extractor
     # ByteExtractor extracts bits from each scanline bytes

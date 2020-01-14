@@ -124,7 +124,11 @@ module ZSteg
           @options[:verbose] -= 1
         end
         opts.on "-C", "--[no-]color", "Force (or disable) color output (default: auto)" do |x|
-          Sickill::Rainbow.enabled = x
+          if defined?(Rainbow) && Rainbow.respond_to?(:enabled=)
+            Rainbow.enabled = x
+          else
+            Sickill::Rainbow.enabled = x
+          end
         end
         opts.separator "\nPARAMS SHORTCUT\n"+
           "\tzsteg fname.png 2b,b,lsb,xy  ==>  --bits 2 --channel b --lsb --order xy"

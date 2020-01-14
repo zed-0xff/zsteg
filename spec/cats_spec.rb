@@ -3,7 +3,9 @@ require 'spec_helper'
 describe "cats.png" do
   subject{ cli(sample("cats.png")) }
 
-  its(:size){ should < 4_000 }
+  it "size should be < 4k" do
+    subject.size.should < 4_000
+  end
 
   it "should get 2nd cat" do
     should include("Second cat is Marussia")

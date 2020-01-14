@@ -1,3 +1,4 @@
+#coding: binary
 $:.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'zsteg'
 
@@ -19,7 +20,7 @@ def sample fname
 end
 
 def cli *args
-  @@cli_cache ||= {}
+  @cli_cache ||= {}
   args.map! do |arg|
     if arg.is_a?(String) && arg[' ']
       # split strings with spaces into arrays
@@ -29,7 +30,7 @@ def cli *args
     end
   end
   args.flatten!
-  @@cli_cache[args.inspect] ||=
+  @cli_cache[args.inspect] ||=
     begin
       klass =
         if args.first.is_a?(Symbol)
@@ -52,6 +53,7 @@ def cli *args
 end
 
 RSpec.configure do |config|
+  config.expect_with(:rspec) { |c| c.syntax = :should }
   config.before :suite do
     Dir[File.join(SAMPLES_DIR, "**", "*.7z")].each do |fname|
       next if File.exist?(fname.sub(/\.7z$/,''))
