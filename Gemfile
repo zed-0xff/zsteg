@@ -1,10 +1,10 @@
 source "http://rubygems.org"
 
-gem 'zpng', ">= 0.2.5"
+gem 'zpng', ">= 0.3.0"
 gem "iostruct"
 
 group :development do
-  gem "rspec",   ">= 3.4.4"
-  gem "bundler", ">= 1.0.0"
+  gem "rspec",   "~> 3.9.0"
+  gem "bundler", "~> 2.1.4"
   gem "jeweler", "~> 2.3.9"
 end
