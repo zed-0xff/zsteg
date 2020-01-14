@@ -1,1 +1,8 @@
-zsteg
+#!/usr/bin/env ruby
+
+base = File.expand_path('../lib', File.dirname(__FILE__))
+$:.unshift(base)
+
+require File.join(base, 'zsteg')
+
+ZSteg::CLI.run
