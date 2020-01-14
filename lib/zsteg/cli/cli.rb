@@ -209,6 +209,8 @@ module ZSteg
           h[:order] = x
         when 'prime'
           h[:prime] = true
+        when 'zlib'
+          h[:zlib] = true
         else
           raise "uknown param #{x.inspect}"
         end
@@ -227,6 +229,8 @@ module ZSteg
         # zlib stream may contain extradata
         @img.imagedata
         @img.extradata[$1.to_i]
+      when /imagedata/
+        @img.imagedata
       else
         h = decode_param_string name
         h[:limit] = @options[:limit] if @options[:limit] != Checker::DEFAULT_LIMIT
@@ -242,7 +246,15 @@ module ZSteg
     end
 
     def extract name
-      print _extract_data(name)
+      data = _extract_data(name)
+      if name['zlib']
+        if r = Checker::Zlib.check_data(data)
+          data = r.data
+        else
+          raise "cannot decompress with zlib"
+        end
+      end
+      print data
     end
 
   end
