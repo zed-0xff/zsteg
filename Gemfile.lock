@@ -46,7 +46,7 @@ GEM
       rack (>= 1.2, < 3)
     psych (3.1.0)
     rack (2.1.1)
-    rainbow (2.0.0)
+    rainbow (3.0.0)
     rake (13.0.1)
     rdoc (6.2.1)
     rspec (3.9.0)
@@ -64,8 +64,8 @@ GEM
     rspec-support (3.9.2)
     semver2 (3.4.2)
     thread_safe (0.3.6)
-    zpng (0.3.0)
-      rainbow (~> 2.0.0)
+    zpng (0.3.1)
+      rainbow
 
 PLATFORMS
   ruby
@@ -75,7 +75,7 @@ DEPENDENCIES
   iostruct
   jeweler (~> 2.3.9)
   rspec (~> 3.9.0)
-  zpng (>= 0.3.0)
+  zpng (>= 0.3.1)
 
 BUNDLED WITH
    2.1.4
