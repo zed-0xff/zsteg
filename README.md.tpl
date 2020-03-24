@@ -49,6 +49,11 @@ Examples
 
 % zsteg ndh2k12_sp113.bmp -b 1 -o yx -v
 
+See also
+--------
+1. https://29a.ch/photo-forensics/
+2. https://holloway.nz/steg/
+
 License
 -------
 Released under the MIT License.  See the [LICENSE](https://github.com/zed-0xff/zsteg/blob/master/LICENSE.txt) file for further details.

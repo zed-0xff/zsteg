@@ -29,16 +29,25 @@ Usage
     Usage: zsteg [options] filename.png [param_string]
     
         -c, --channels X                 channels (R/G/B/A) or any combination, comma separated
-                                         valid values: r,g,b,a,rg,rgb,bgr,rgba,...
+                                         valid values: r,g,b,a,rg,bgr,rgba,r3g2b3,...
         -l, --limit N                    limit bytes checked, 0 = no limit (default: 256)
-        -b, --bits N                     number of bits (1..8), single value or '1,3,5' or '1-8'
+        -b, --bits N                     number of bits, single int value or '1,3,5' or range '1-8'
+                                         advanced: specify individual bits like '00001110' or '0x88'
             --lsb                        least significant BIT comes first
             --msb                        most significant BIT comes first
         -P, --prime                      analyze/extract only prime bytes/pixels
+            --invert                     invert bits (XOR 0xff)
         -a, --all                        try all known methods
         -o, --order X                    pixel iteration order (default: 'auto')
                                          valid values: ALL,xy,yx,XY,YX,xY,Xy,bY,...
         -E, --extract NAME               extract specified payload, NAME is like '1b,rgb,lsb'
+    
+            --[no-]file                  use 'file' command to detect data type (default: YES)
+            --no-strings                 disable ASCII strings finding (default: enabled)
+        -s, --strings X                  ASCII strings find mode: first, all, longest, none
+                                         (default: first)
+        -n, --min-str-len X              minimum string length (default: 8)
+            --shift N                    prepend N zero bits
     
         -v, --verbose                    Run verbosely (can be used multiple times)
         -q, --quiet                      Silent any warnings (can be used multiple times)
@@ -54,7 +63,8 @@ Examples
 
     # zsteg flower_rgb3.png
 
-    3b,rgb,lsb,xy       .. text: "SuperSecretMessage"
+    imagedata           .. file: 370 XA sysV pure executable not stripped - version 768
+    b3,rgb,lsb,xy       .. text: "SuperSecretMessage"
 
 ### Multi-result file
 
@@ -65,16 +75,34 @@ Examples
     meta A              .. [same as "meta F"]
     meta date:create    .. text: "2012-03-15T23:32:46+07:00"
     meta date:modify    .. text: "2012-03-15T23:32:14+07:00"
-    1b,r,lsb,xy         .. text: "Second cat is Marussia"
-    1b,g,lsb,xy         .. text: "Good, but look a bit deeper..."
-    1b,bgr,lsb,xy       .. text: "MF_WIhf>"
-    2b,g,lsb,xy         .. text: "VHello, third kitten is Bessy"
+    imagedata           .. file: 68K BCS executable
+    b1,r,lsb,xy         .. text: "Second cat is Marussia"
+    b1,g,lsb,xy         .. text: "Good, but look a bit deeper..."
+    b1,bgr,lsb,xy       .. text: "MF_WIhf>"
+    b2,g,lsb,xy         .. text: "VHello, third kitten is Bessy"
 
 ### wbStego even distributed
 
     # zsteg wbstego/wbsteg_noenc_even.bmp 1b,lsb,bY -v
 
-    1b,lsb,bY           .. <wbStego size=22, data="xtSuperSecretMessage\n", even=true, mix=true, controlbyte="t">
+    imagedata           .. file: FoxPro FPT, blocks size 1, next free block index 65537
+        00000000: 00 01 00 01 00 00 00 01  00 00 00 00 00 00 00 00  |................|
+        00000010: 00 00 00 00 00 00 00 00  00 00 00 01 00 01 01 00  |................|
+        00000020: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+        00000030: 00 01 01 01 00 01 00 00  00 00 00 00 01 01 00 01  |................|
+        00000040: 01 00 01 01 00 01 00 01  00 01 01 01 01 00 00 00  |................|
+        00000050: 00 00 00 01 01 01 01 00  01 00 01 00 00 00 00 01  |................|
+        00000060: 00 00 01 01 01 00 00 01  00 01 01 01 00 01 00 00  |................|
+        00000070: 01 01 01 00 01 00 00 00  00 00 01 01 01 00 00 00  |................|
+        00000080: 00 01 00 01 00 00 01 01  01 01 00 00 00 01 01 00  |................|
+        00000090: 00 01 00 01 00 01 01 00  01 00 00 01 00 01 00 00  |................|
+        000000a0: 00 01 01 01 00 01 00 01  01 01 00 01 00 00 00 01  |................|
+        000000b0: 01 00 01 00 00 01 00 01  00 01 01 01 00 00 00 00  |................|
+        000000c0: 01 00 00 00 00 01 00 00  01 01 00 00 01 00 00 00  |................|
+        000000d0: 00 00 01 00 00 01 01 01  00 01 01 00 00 01 00 01  |................|
+        000000e0: 01 01 01 01 01 01 01 00  00 00 00 00 01 00 00 00  |................|
+        000000f0: 00 01 01 01 00 00 01 00  00 00 01 01 00 01 00 01  |................|
+    b1,lsb,bY           .. <wbStego size=22, data="xtSuperSecretMessage\n", even=true, mix=true, controlbyte="t">
         00000000: 51 00 00 16 00 00 74 0d  b5 78 1e a1 39 74 e8 38  |Q.....t..x..9t.8|
         00000010: 53 c6 56 94 75 d1 a5 70  84 c8 27 65 fe 08 72 35  |S.V.u..p..'e..r5|
         00000020: 1f 3e 53 5d a7 65 8b 6e  3b 63 6b 1d bf 72 ee 27  |.>S].e.n;ck..r.'|
@@ -86,7 +114,7 @@ Examples
 
     # zsteg wbstego/wbsteg_blowfish_pass_1.bmp 1b,lsb,bY -v
 
-    1b,lsb,bY           .. <wbStego size=26, data="\rC\xF5\xBF#\xFF[6\e\xB3"..., even=false, hdr="\x01", enc="Blowfish">
+    b1,lsb,bY           .. <wbStego size=26, data="\rC\xF5\xBF#\xFF[6\e\xB3"..., even=false, hdr="\x01", enc="Blowfish">
         00000000: 1a 00 00 00 ff 01 01 0d  43 f5 bf 23 ff 5b 36 1b  |........C..#.[6.|
         00000010: b3 17 42 4a 3f ba eb c7  ee 9c d7 7a 2b           |..BJ?......z+   |
 
@@ -94,7 +122,7 @@ Examples
 
     # zsteg ndh2k12_sp113.bmp -b 1 -o yx -v
 
-    1b,rgb,lsb,yx       .. zlib: data="%PDF-1.4\n%\xC3\xA4\xC3\xBC\xC3\xB6\xC3\x9F\n2 0 obj\n<</Length 3 0 R/Filter/FlateDecode>>\nstream\nx\x9C\x8DT\xC9n\xDB@\f\xBD\xCFW\xF0\x1C \x13\x92\xB3\x03\x86\x80\xC8K\xD1\xDE\\\b\xE8\xA1\xE8)K\x8B\xA2n\x91\\\xF2\xFB!5Zl\xD5v\v\x01\xD4\x90C\xBE\xF7\x86\x1A\n-\xC1\x9By\x01\x94'\x94`=d\xCF\xF0\xFA\x04_n\xE0\xF7\x10Gx\xFDn\xDA\xCE\xB0\x8F6\x80s$Y\xDD#\xDC\xED\b\x1CC\xF7\xBCBBF\x87^\xDE\xA1\xE9~\x9Amg\xF6\x8BZ\xCAYj", offset=4
+    b1,rgb,lsb,yx       .. zlib: data="%PDF-1.4\n%\xC3\xA4\xC3\xBC\xC3\xB6\xC3\x9F\n2 0 obj\n<</Length 3 0 R/Filter/FlateDecode>>\nstream\nx\x9C\x8DT\xC9n\xDB@\f\xBD\xCFW\xF0\x1C \x13\x92\xB3\x03\x86\x80\xC8K\xD1\xDE\\\b\xE8\xA1...", offset=4, size=186
         00000000: 00 02 eb 9b 78 9c d4 b9  65 54 24 cc 92 36 58 b8  |....x...eT$..6X.|
         00000010: d3 68 e3 ee ee 4e e3 ee  ee 0e 85 bb 3b dd 68 23  |.h...N......;.h#|
         00000020: 8d bb bb bb 3b 8d bb bb  3b 34 ee 6e 1f ef 7b ef  |....;...;4.n..{.|
@@ -111,6 +139,11 @@ Examples
         000000d0: f2 19 5c df 76 eb 01 49  dc fd cd 76 65 a2 3a 8a  |..\.v..I...ve.:.|
         000000e0: fd bb 13 a9 e6 3a c9 da  19 34 ae f0 43 bb 90 90  |.....:...4..C...|
         000000f0: 58 88 de 46 ce 91 6f aa  8d d9 7d b8 d6 88 a6 65  |X..F..o...}....e|
+
+See also
+--------
+1. https://29a.ch/photo-forensics/
+2. https://holloway.nz/steg/
 
 License
 -------
