@@ -26,7 +26,7 @@ module ZSteg
           %w'r g b rgb bgr'
         end
       @verbose = params[:verbose] || -2
-      @file_cmd = FileCmd.new
+      @file_cmd = FileCmd.new if params.fetch(:file, true)
       @results = []
 
       @params[:bits]  ||= DEFAULT_BITS
@@ -65,7 +65,7 @@ module ZSteg
 
     def check
       @found_anything = false
-      @file_cmd.start!
+      @file_cmd.start! if @file_cmd
 
       if @extra_checks
         check_extradata
@@ -116,7 +116,7 @@ module ZSteg
       # return everything found if this method was called from some code
       @results
     ensure
-      @file_cmd.stop!
+      @file_cmd.stop! if @file_cmd
     end
 
     def check_imagedata
@@ -355,7 +355,7 @@ module ZSteg
         return Result::WholeText.new(data, 0)
       end
 
-      if params.fetch(:file, true) && (r = @file_cmd.data2result(data))
+      if @file_cmd && (r = @file_cmd.data2result(data))
         return r
       end
 
