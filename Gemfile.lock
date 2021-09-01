@@ -52,7 +52,7 @@ GEM
     rainbow (3.0.0)
     rake (13.0.3)
     rchardet (1.8.0)
-    rdoc (6.3.0)
+    rdoc (6.3.2)
     rspec (3.9.0)
       rspec-core (~> 3.9.0)
       rspec-expectations (~> 3.9.0)
