@@ -68,7 +68,7 @@ GEM
     rspec-support (3.9.4)
     semver2 (3.4.2)
     thread_safe (0.3.6)
-    zpng (0.3.2)
+    zpng (0.3.3)
       rainbow
 
 PLATFORMS
@@ -79,7 +79,7 @@ DEPENDENCIES
   iostruct
   jeweler (~> 2.3.9)
   rspec (~> 3.9.0)
-  zpng (>= 0.3.1)
+  zpng (>= 0.3.3)
 
 BUNDLED WITH
-   2.2.3
+   2.2.22
