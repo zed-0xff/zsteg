@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0".freeze) if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib".freeze]
   s.authors = ["Andrey \"Zed\" Zaikin".freeze]
-  s.date = "2022-03-01"
+  s.date = "2022-06-30"
   s.email = "zed.0xff@gmail.com".freeze
   s.executables = ["zsteg".freeze, "zsteg-mask".freeze, "zsteg-reflow".freeze]
   s.extra_rdoc_files = [
@@ -103,7 +103,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "http://github.com/zed-0xff/zsteg".freeze
   s.licenses = ["MIT".freeze]
-  s.rubygems_version = "3.2.32".freeze
+  s.rubygems_version = "3.1.6".freeze
   s.summary = "Detect stegano-hidden data in PNG & BMP files.".freeze
 
   if s.respond_to? :specification_version then
@@ -111,16 +111,14 @@ Gem::Specification.new do |s|
   end
 
   if s.respond_to? :add_runtime_dependency then
-    s.add_runtime_dependency(%q<zpng>.freeze, [">= 0.4.2"])
+    s.add_runtime_dependency(%q<zpng>.freeze, [">= 0.4.3"])
     s.add_runtime_dependency(%q<iostruct>.freeze, [">= 0"])
     s.add_development_dependency(%q<rspec>.freeze, [">= 0"])
-    s.add_development_dependency(%q<bundler>.freeze, [">= 0"])
     s.add_development_dependency(%q<juwelier>.freeze, [">= 0"])
   else
-    s.add_dependency(%q<zpng>.freeze, [">= 0.4.2"])
+    s.add_dependency(%q<zpng>.freeze, [">= 0.4.3"])
     s.add_dependency(%q<iostruct>.freeze, [">= 0"])
     s.add_dependency(%q<rspec>.freeze, [">= 0"])
-    s.add_dependency(%q<bundler>.freeze, [">= 0"])
     s.add_dependency(%q<juwelier>.freeze, [">= 0"])
   end
 end
