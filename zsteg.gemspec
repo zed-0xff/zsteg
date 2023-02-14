@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0".freeze) if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib".freeze]
   s.authors = ["Andrey \"Zed\" Zaikin".freeze]
-  s.date = "2022-08-29"
+  s.date = "2023-02-14"
   s.email = "zed.0xff@gmail.com".freeze
   s.executables = ["zsteg".freeze, "zsteg-mask".freeze, "zsteg-reflow".freeze]
   s.extra_rdoc_files = [
@@ -47,36 +47,6 @@ Gem::Specification.new do |s|
     "lib/zsteg/file_cmd.rb",
     "lib/zsteg/masker.rb",
     "lib/zsteg/result.rb",
-    "pngsteg.gemspec",
-    "samples/hackquest/crypt.bmp",
-    "samples/hackquest/square.bmp",
-    "samples/newbiecontest/alph1-surprise.bmp.7z",
-    "samples/wbstego/wbsteg_blowfish_pass_1.bmp",
-    "samples/wbstego/wbsteg_cast128_pass_1.bmp",
-    "samples/wbstego/wbsteg_enc_pass_pass.bmp",
-    "samples/wbstego/wbsteg_enc_pass_pass_even.bmp",
-    "samples/wbstego/wbsteg_mix_pass_1.bmp",
-    "samples/wbstego/wbsteg_mix_pass_1_even.bmp",
-    "samples/wbstego/wbsteg_mix_pass_foobar.bmp",
-    "samples/wbstego/wbsteg_mix_pass_pass.bmp",
-    "samples/wbstego/wbsteg_mixenc_pass_pass_even.bmp",
-    "samples/wbstego/wbsteg_noenc.bmp",
-    "samples/wbstego/wbsteg_noenc.png",
-    "samples/wbstego/wbsteg_noenc_.bmp",
-    "samples/wbstego/wbsteg_noenc_17.bmp",
-    "samples/wbstego/wbsteg_noenc__.bmp",
-    "samples/wbstego/wbsteg_noenc_even.bmp",
-    "samples/wbstego/wbsteg_noenc_even2.bmp",
-    "samples/wbstego/wbsteg_noenc_even_17.bmp",
-    "samples/wbstego/wbsteg_noenc_even_17_.bmp",
-    "samples/wbstego/wbsteg_noenc_ext_ABC.bmp",
-    "samples/wbstego/wbsteg_rijndael_pass_1.bmp",
-    "samples/wbstego/wbsteg_rijndael_pass_pass.bmp",
-    "samples/wbstego/wbsteg_rijndael_pass_pass_even.bmp",
-    "samples/wbstego/wbsteg_twofish_pass_1.bmp",
-    "samples/wechall/5ZMGcCLxpcpsru03.g00000010.png",
-    "samples/wechall/5ZMGcCLxpcpsru03.png",
-    "samples/wechall/stegano1.bmp",
     "spec/bin_spec.rb",
     "spec/camouflage_spec.rb",
     "spec/cats_spec.rb",
@@ -103,7 +73,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "http://github.com/zed-0xff/zsteg".freeze
   s.licenses = ["MIT".freeze]
-  s.rubygems_version = "3.1.6".freeze
+  s.rubygems_version = "3.3.7".freeze
   s.summary = "Detect stegano-hidden data in PNG & BMP files.".freeze
 
   if s.respond_to? :specification_version then

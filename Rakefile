@@ -24,7 +24,7 @@ Juwelier::Tasks.new do |gem|
   #gem.executables = %w'zsteg'
   gem.files.include "lib/**/*.rb"
   gem.files.include "bin/*"
-  gem.files.exclude "samples/*"
+  gem.files.exclude "samples/**/*"
   # dependencies defined in Gemfile
 end
 Juwelier::RubygemsDotOrgTasks.new
