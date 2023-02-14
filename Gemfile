@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
-gem "zpng", ">= 0.4.3"
+gem "zpng", ">= 0.4.4"
 gem "iostruct"
 gem "prime"
 
