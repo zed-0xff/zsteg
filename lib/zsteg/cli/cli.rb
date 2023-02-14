@@ -201,7 +201,7 @@ module ZSteg
           h[:bit_order] = :lsb
         when 'msb'
           h[:bit_order] = :msb
-        when /^(\d)b$/, /^b(\d)$/
+        when /^(\d)b$/, /^b(\d+)$/
           h[:bits] = parse_bits($1)
         when /\A[rgba]+\Z/
           h[:channels] = [x]
