@@ -48,7 +48,7 @@ def cli *args
       ensure
         $stdout = orig_stdout
       end
-      out.strip
+      out
     end
 end
 

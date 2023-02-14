@@ -16,7 +16,7 @@ sample("ndh2k12_sp113.bmp") do |fname|
       subject{ cli(fname, "--extract b1,rgb,lsb,yx,zlib") }
 
       it { should include "%PDF-1.4" }
-      it { subject.size.should == 202383 }
+      it { subject.size.should == 202386 }
     end
   end
 end
