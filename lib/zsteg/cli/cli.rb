@@ -19,6 +19,28 @@ module ZSteg
         opts.banner = "Usage: zsteg [options] filename.png [param_string]"
         opts.separator ""
 
+        opts.on "-a", "--all", "try all known methods" do
+          @options[:prime] = :all
+          @options[:order] = :all
+          @options[:bits]  = (1..8).to_a
+          # specifying --all on command line explicitly enables extra checks
+          @options[:extra_checks] = true
+        end
+
+        opts.on "-E", "--extract NAME", "extract specified payload, NAME is like '1b,rgb,lsb'" do |x|
+          @options[:verbose] = -2 # silent ZPNG warnings
+          @actions << [:extract, x]
+        end
+
+        #################################################################################
+        opts.separator "\nIteration/extraction params:"
+        #################################################################################
+
+        opts.on("-o", "--order X", /all|auto|[bxy,]+/i,
+                "pixel iteration order (default: '#{@options[:order]}')",
+                "valid values: ALL,xy,yx,XY,YX,xY,Xy,bY,...",
+        ){ |x| @options[:order] = x.split(',') }
+
         opts.on("-c", "--channels X", /[rgba,1-8]+/,
                 "channels (R/G/B/A) or any combination, comma separated",
                 "valid values: r,g,b,a,rg,bgr,rgba,r3g2b3,..."
@@ -27,10 +49,6 @@ module ZSteg
           # specifying channels on command line disables extra checks
           @options[:extra_checks] = false
         end
-
-        opts.on("-l", "--limit N", Integer,
-                "limit bytes checked, 0 = no limit (default: #{@options[:limit]})"
-        ){ |n| @options[:limit] = n }
 
         opts.on("-b", "--bits N", "number of bits, single int value or '1,3,5' or range '1-8'",
                 "advanced: specify individual bits like '00001110' or '0x88'"
@@ -50,10 +68,10 @@ module ZSteg
           @options[:extra_checks] = false
         end
 
-        opts.on "--lsb", "least significant BIT comes first" do
+        opts.on "--lsb", "least significant bit comes first" do
           @options[:bit_order] = :lsb
         end
-        opts.on "--msb", "most significant BIT comes first" do
+        opts.on "--msb", "most significant bit comes first" do
           @options[:bit_order] = :msb
         end
 
@@ -62,31 +80,19 @@ module ZSteg
           # specifying prime on command line disables extra checks
           @options[:extra_checks] = false
         end
-        opts.on "--invert", "invert bits (XOR 0xff)" do
-          @options[:invert] = true
-        end
+
+        opts.on("--shift N", Integer, "prepend N zero bits"){ |x| @options[:shift] = x }
+        opts.on("--invert", "invert bits (XOR 0xff)"){ @options[:invert] = true }
+
+        #################################################################################
+        opts.separator "\nAnalysis params:"
+        #################################################################################
+
+        opts.on("-l", "--limit N", Integer, "limit bytes checked, 0 = no limit (default: #{@options[:limit]})"){ |n| @options[:limit] = n }
 
 #        opts.on "--pixel-align", "pixel-align hidden data (EasyBMP)" do
 #          @options[:pixel_align] = true
 #        end
-
-        opts.on "-a", "--all", "try all known methods" do
-          @options[:prime] = :all
-          @options[:order] = :all
-          @options[:bits]  = (1..8).to_a
-          # specifying --all on command line explicitly enables extra checks
-          @options[:extra_checks] = true
-        end
-
-        opts.on("-o", "--order X", /all|auto|[bxy,]+/i,
-                "pixel iteration order (default: '#{@options[:order]}')",
-                "valid values: ALL,xy,yx,XY,YX,xY,Xy,bY,...",
-        ){ |x| @options[:order] = x.split(',') }
-
-        opts.on "-E", "--extract NAME", "extract specified payload, NAME is like '1b,rgb,lsb'" do |x|
-          @options[:verbose] = -2 # silent ZPNG warnings
-          @actions << [:extract, x]
-        end
 
         opts.separator ""
 
@@ -110,10 +116,6 @@ module ZSteg
         opts.on "-n", "--min-str-len X", Integer,
           "minimum string length (default: #{Checker::DEFAULT_MIN_STR_LEN})" do |x|
           @options[:min_str_len] = x
-        end
-
-        opts.on "--shift N", Integer, "prepend N zero bits" do |x|
-          @options[:shift] = x
         end
 
         opts.separator ""
