@@ -11,9 +11,11 @@ module ZSteg
     def run
       @actions = []
       @options = {
-        :verbose => 0,
-        :limit => Checker::DEFAULT_LIMIT,
-        :order => Checker::DEFAULT_ORDER
+        verbose: 0,
+        limit: Checker::DEFAULT_LIMIT,
+        order: Checker::DEFAULT_ORDER,
+        step: 1, 
+        ystep: 1, 
       }
       optparser = OptionParser.new do |opts|
         opts.banner = "Usage: zsteg [options] filename.png [param_string]"
@@ -22,6 +24,7 @@ module ZSteg
         opts.on "-a", "--all", "try all known methods" do
           @options[:prime] = :all
           @options[:order] = :all
+          @options[:pixel_align] = :all
           @options[:bits]  = (1..8).to_a
           # specifying --all on command line explicitly enables extra checks
           @options[:extra_checks] = true
@@ -54,6 +57,10 @@ module ZSteg
                 "advanced: specify individual bits like '00001110' or '0x88'"
         ) do |x|
           a = []
+          if x[-1] == 'p'
+            @options[:pixel_align] = true
+            x = x[0..-2]
+          end
           x = '1-8' if x == 'all'
           x.split(',').each do |x1|
             if x1['-']
@@ -82,17 +89,18 @@ module ZSteg
         end
 
         opts.on("--shift N", Integer, "prepend N zero bits"){ |x| @options[:shift] = x }
-        opts.on("--invert", "invert bits (XOR 0xff)"){ @options[:invert] = true }
+        #opts.on("--step N",  Integer, "step")               { |x| @options[:step] = x }
+        opts.on("--invert", "invert bits (XOR 0xff)")       { @options[:invert] = true }
+
+        opts.on "--pixel-align", "pixel-align hidden data" do
+          @options[:pixel_align] = true
+        end
 
         #################################################################################
         opts.separator "\nAnalysis params:"
         #################################################################################
 
         opts.on("-l", "--limit N", Integer, "limit bytes checked, 0 = no limit (default: #{@options[:limit]})"){ |n| @options[:limit] = n }
-
-#        opts.on "--pixel-align", "pixel-align hidden data (EasyBMP)" do
-#          @options[:pixel_align] = true
-#        end
 
         opts.separator ""
 
@@ -205,6 +213,9 @@ module ZSteg
           h[:bit_order] = :msb
         when /^(\d)b$/, /^b(\d+)$/
           h[:bits] = parse_bits($1)
+        when /^(\d)bp$/, /^b(\d+)p$/
+          h[:bits] = parse_bits($1)
+          h[:pixel_align] = true
         when /\A[rgba]+\Z/
           h[:channels] = [x]
         when /\Axy|yx|yb|by\Z/i

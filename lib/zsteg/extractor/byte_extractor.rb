@@ -32,8 +32,8 @@ module ZSteg
             else
               8.times{ |i| byte |= (a.shift<<(7-i))}
             end
-            #printf "[d] %02x %08b\n", byte, byte
             data << byte.chr
+            #a = []
             if data.size >= @limit
               print "[limit #@limit]".gray if @verbose > 1
               break
@@ -77,12 +77,15 @@ module ZSteg
             [@image.height-1, 0, -1]
           end
 
+        xstep *= params[:step] if params[:step]
+        ystep *= params[:ystep] if params[:ystep]
+
         # cannot join these lines from ByteExtractor and ColorExtractor into
         # one method for performance reason:
         #   it will require additional yield() for EACH BYTE iterated
 
         if type[0,1].downcase == 'b'
-          # ROW iterator
+          # ROW iterator (natural)
           if params[:prime]
             idx = 0
             y0.step(y1,ystep){ |y| x0.step(x1,xstep){ |x|

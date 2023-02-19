@@ -40,6 +40,7 @@ def cli *args
         else
           ZSteg::CLI
         end
+      args << "-qqq"
       args << "--no-color" unless args.any?{|x| x['color']}
       orig_stdout, out = $stdout, ""
       begin

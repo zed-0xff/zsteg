@@ -6,7 +6,7 @@ module ZSteg
 
       def color_extract params = {}
         channels = Array(params[:channels])
-        #pixel_align = params[:pixel_align]
+        pixel_align = params[:pixel_align]
 
         ch_masks = []
         case channels.first.size
@@ -42,28 +42,28 @@ module ZSteg
             color = @image[x,y]
 
             ch_masks.each do |c,bidxs|
+              bidxs = bidxs[a.size-8..] if pixel_align && a.size + bidxs.size > 8
               value = color.send(c)
               bidxs.each do |bidx|
                 a << value[bidx]
               end
             end
-            #p [x,y,a.size,a]
 
             while a.size >= 8
               byte = 0
-              #puts a.join
+              # a0 = a.dup
               if params[:bit_order] == :msb
                 8.times{ |i| byte |= (a.shift<<i)}
               else
                 8.times{ |i| byte |= (a.shift<<(7-i))}
               end
-              #printf "[d] %02x %08b\n", byte, byte
+              # printf "[d] %-10s -> %-10s : %s %02x %08b  x=%d y=%d\n", a0.join, a.join, byte.chr.inspect, byte, byte, x, y
               data << byte.chr
               if data.size >= @limit
                 print "[limit #@limit]".gray if @verbose > 1
                 throw :limit
               end
-              #a.clear if pixel_align
+              a.clear if pixel_align && a.size < 8
             end
           end
         end

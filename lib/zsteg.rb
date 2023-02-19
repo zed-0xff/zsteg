@@ -9,10 +9,6 @@ require 'zsteg/checker'
 require 'zsteg/result'
 require 'zsteg/file_cmd'
 
-require 'zsteg/checker/wbstego'
-require 'zsteg/checker/scanline_checker'
-require 'zsteg/checker/zlib'
-
 require 'zsteg/masker'
 
 require 'zsteg/analyzer'

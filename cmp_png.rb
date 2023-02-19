@@ -5,7 +5,7 @@ require 'awesome_print'
 images = ARGV.map{ |fname| ZPNG::Image.load(fname) }
 raise "need at least 2 images" if images.size < 2
 
-limit = 20
+limit = 100
 alpha_used = images.any?(&:alpha_used?)
 channels = alpha_used ? %w'r g b a' : %w'r g b'
 

@@ -28,26 +28,32 @@ Usage
 
     Usage: zsteg [options] filename.png [param_string]
     
-        -c, --channels X                 channels (R/G/B/A) or any combination, comma separated
-                                         valid values: r,g,b,a,rg,bgr,rgba,r3g2b3,...
-        -l, --limit N                    limit bytes checked, 0 = no limit (default: 256)
-        -b, --bits N                     number of bits, single int value or '1,3,5' or range '1-8'
-                                         advanced: specify individual bits like '00001110' or '0x88'
-            --lsb                        least significant BIT comes first
-            --msb                        most significant BIT comes first
-        -P, --prime                      analyze/extract only prime bytes/pixels
-            --invert                     invert bits (XOR 0xff)
         -a, --all                        try all known methods
+        -E, --extract NAME               extract specified payload, NAME is like '1b,rgb,lsb'
+    
+    Iteration/extraction params:
         -o, --order X                    pixel iteration order (default: 'auto')
                                          valid values: ALL,xy,yx,XY,YX,xY,Xy,bY,...
-        -E, --extract NAME               extract specified payload, NAME is like '1b,rgb,lsb'
+        -c, --channels X                 channels (R/G/B/A) or any combination, comma separated
+                                         valid values: r,g,b,a,rg,bgr,rgba,r3g2b3,...
+        -b, --bits N                     number of bits, single int value or '1,3,5' or range '1-8'
+                                         advanced: specify individual bits like '00001110' or '0x88'
+            --lsb                        least significant bit comes first
+            --msb                        most significant bit comes first
+        -P, --prime                      analyze/extract only prime bytes/pixels
+            --shift N                    prepend N zero bits
+            --step N                     step
+            --invert                     invert bits (XOR 0xff)
+            --pixel-align                pixel-align hidden data
+    
+    Analysis params:
+        -l, --limit N                    limit bytes checked, 0 = no limit (default: 256)
     
             --[no-]file                  use 'file' command to detect data type (default: YES)
             --no-strings                 disable ASCII strings finding (default: enabled)
         -s, --strings X                  ASCII strings find mode: first, all, longest, none
                                          (default: first)
         -n, --min-str-len X              minimum string length (default: 8)
-            --shift N                    prepend N zero bits
     
         -v, --verbose                    Run verbosely (can be used multiple times)
         -q, --quiet                      Silent any warnings (can be used multiple times)
@@ -85,23 +91,6 @@ Examples
 
     # zsteg wbstego/wbsteg_noenc_even.bmp 1b,lsb,bY -v
 
-    imagedata           .. file: FoxPro FPT, blocks size 1, next free block index 65537
-        00000000: 00 01 00 01 00 00 00 01  00 00 00 00 00 00 00 00  |................|
-        00000010: 00 00 00 00 00 00 00 00  00 00 00 01 00 01 01 00  |................|
-        00000020: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
-        00000030: 00 01 01 01 00 01 00 00  00 00 00 00 01 01 00 01  |................|
-        00000040: 01 00 01 01 00 01 00 01  00 01 01 01 01 00 00 00  |................|
-        00000050: 00 00 00 01 01 01 01 00  01 00 01 00 00 00 00 01  |................|
-        00000060: 00 00 01 01 01 00 00 01  00 01 01 01 00 01 00 00  |................|
-        00000070: 01 01 01 00 01 00 00 00  00 00 01 01 01 00 00 00  |................|
-        00000080: 00 01 00 01 00 00 01 01  01 01 00 00 00 01 01 00  |................|
-        00000090: 00 01 00 01 00 01 01 00  01 00 00 01 00 01 00 00  |................|
-        000000a0: 00 01 01 01 00 01 00 01  01 01 00 01 00 00 00 01  |................|
-        000000b0: 01 00 01 00 00 01 00 01  00 01 01 01 00 00 00 00  |................|
-        000000c0: 01 00 00 00 00 01 00 00  01 01 00 00 01 00 00 00  |................|
-        000000d0: 00 00 01 00 00 01 01 01  00 01 01 00 00 01 00 01  |................|
-        000000e0: 01 01 01 01 01 01 01 00  00 00 00 00 01 00 00 00  |................|
-        000000f0: 00 01 01 01 00 00 01 00  00 00 01 01 00 01 00 01  |................|
     b1,lsb,bY           .. <wbStego size=22, data="xtSuperSecretMessage\n", even=true, mix=true, controlbyte="t">
         00000000: 51 00 00 16 00 00 74 0d  b5 78 1e a1 39 74 e8 38  |Q.....t..x..9t.8|
         00000010: 53 c6 56 94 75 d1 a5 70  84 c8 27 65 fe 08 72 35  |S.V.u..p..'e..r5|

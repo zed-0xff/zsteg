@@ -3,6 +3,11 @@ require 'stringio'
 require 'zlib'
 require 'set'
 
+require 'zsteg/checker/scanline_checker'
+require 'zsteg/checker/steganography_png'
+require 'zsteg/checker/wbstego'
+require 'zsteg/checker/zlib'
+
 module ZSteg
   class Checker
     attr_accessor :params, :channels, :verbose, :results
@@ -46,20 +51,20 @@ module ZSteg
 
     private
 
-    # catch Kernel#print for easier verbosity handling
-    def print *args
-      Kernel.print(*args) if @verbose >= 0
-    end
-
-    # catch Kernel#printf for easier verbosity handling
-    def printf *args
-      Kernel.printf(*args) if @verbose >= 0
-    end
-
-    # catch Kernel#puts for easier verbosity handling
-    def puts *args
-      Kernel.puts(*args) if @verbose >= 0
-    end
+#   # catch Kernel#print for easier verbosity handling
+#    def print *args
+#      Kernel.print(*args) if @verbose >= 0
+#    end
+#
+#    # catch Kernel#printf for easier verbosity handling
+#    def printf *args
+#      Kernel.printf(*args) if @verbose >= 0
+#    end
+#
+#    # catch Kernel#puts for easier verbosity handling
+#    def puts *args
+#      Kernel.puts(*args) if @verbose >= 0
+#    end
 
     public
 
@@ -92,12 +97,26 @@ module ZSteg
       Array(params[:order]).uniq.each do |order|
         (params[:prime] == :all ? [false,true] : [params[:prime]]).each do |prime|
           Array(params[:bits]).uniq.each do |bits|
-            p1 = @params.merge :bits => bits, :order => order, :prime => prime
-            if order[/b/i]
-              # byte iterator does not need channels
-              check_channels nil, p1
+            if params[:pixel_align] == :all
+              [false, true].each do |pixel_align|
+                # skip cases when output will be identical for pixel_align true/false
+                next if pixel_align && (8%bits) == 0
+                p1 = @params.merge bits: bits, order: order, prime: prime, pixel_align: pixel_align
+                if order[/b/i]
+                  # byte iterator does not need channels
+                  check_channels nil, p1
+                else
+                  channels.each{ |c| check_channels c, p1 }
+                end
+              end
             else
-              channels.each{ |c| check_channels c, p1 }
+              p1 = @params.merge bits: bits, order: order, prime: prime
+              if order[/b/i]
+                # byte iterator does not need channels
+                check_channels nil, p1
+              else
+                channels.each{ |c| check_channels c, p1 }
+              end
             end
           end
         end
@@ -149,6 +168,13 @@ module ZSteg
         title = "scanline extradata"
         show_title title, :bright_red
         process_result data, :special => true, :title => title
+      end
+
+      if r = SteganographyPNG.check_image(@image, @params)
+        @found_anything = true
+        title = "image"
+        show_title title, :bright_red
+        process_result nil, title: title, result: r
       end
     end
 
@@ -220,6 +246,8 @@ module ZSteg
           end
         end
 
+      bits_tag << "p" if params[:pixel_align]
+
       title = [
         bits_tag,
         channels,
@@ -268,21 +296,26 @@ module ZSteg
     def process_result data, params
       verbose = params[:special] ? [@verbose,1.5].max : @verbose
 
-      if @cache[data]
-        if verbose > 1
-          puts "[same as #{@cache[data].inspect}]".gray
-          return true
-        else
-          # silent return
-          return false
+      result = nil
+      if data
+        if @cache[data]
+          if verbose > 1
+            puts "[same as #{@cache[data].inspect}]".gray
+            return true
+          else
+            # silent return
+            return false
+          end
         end
-      end
 
-      # TODO: store hash of data for large datas
-      @cache[data] = params[:title]
+        # TODO: store hash of data for large datas
+        @cache[data] = params[:title]
 
-      if result = data2result(data, params)
-        @results << result
+        if result = data2result(data, params)
+          @results << result
+        end
+      elsif !(result = params[:result])
+        raise "[?] No data nor result"
       end
 
       case verbose
@@ -309,7 +342,7 @@ module ZSteg
       else
         show_result result, params
       end
-      if data.size > 0 && !result.is_a?(Result::OneChar) && !result.is_a?(Result::WholeText)
+      if data && data.size > 0 && !result.is_a?(Result::OneChar) && !result.is_a?(Result::WholeText)
         # newline if no results and want hexdump
         puts if !result || result == []
         limit = (params[:limit] || @params[:limit]).to_i
