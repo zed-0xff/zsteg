@@ -76,6 +76,7 @@ module ZSteg
         check_extradata
         check_metadata
         check_imagedata
+        check_chunks
       end
 
       if @image.format == :bmp
@@ -141,6 +142,16 @@ module ZSteg
     def check_imagedata
       h = { :title => "imagedata", :show_title => true }
       process_result @image.imagedata, h
+    end
+
+    def check_chunks
+      @image.chunks.each_with_index do |chunk, idx|
+        next unless chunk.respond_to?(:size) && chunk.respond_to?(:data)
+        next unless chunk.size && chunk.data
+        next if chunk.size < 5 || chunk.is_a?(ZPNG::TextChunk) || chunk.is_a?(ZPNG::Chunk::IDAT)
+        h = { :title => "chunk:#{idx}:#{chunk.type}", :show_title => true }
+        process_result chunk.data, h
+      end
     end
 
     def check_extradata

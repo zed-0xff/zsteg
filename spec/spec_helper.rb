@@ -1,8 +1,13 @@
 #coding: binary
 $:.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'zsteg'
+require 'digest/md5'
 
 SAMPLES_DIR = File.expand_path("../samples", File.dirname(__FILE__))
+
+def md5 data
+  Digest::MD5.hexdigest(data)
+end
 
 def each_sample glob="*.png"
   Dir[File.join(SAMPLES_DIR, glob)].each do |fname|

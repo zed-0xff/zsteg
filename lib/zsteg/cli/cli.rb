@@ -244,6 +244,17 @@ module ZSteg
         @img.extradata[$1.to_i]
       when /imagedata/
         @img.imagedata
+      when /\Achunk:(\d+):(.+)\Z/
+        # chunk with type check
+        idx, type = $1.to_i, $2
+        chunk = @img.chunks[idx]
+        raise "chunk ##{idx}: expected #{type} type, but got #{chunk.type}" if chunk.type != type
+        chunk.data
+      when /\Achunk:(\d+)\Z/
+        # chunk without type check
+        idx, type = $1.to_i, $2
+        chunk = @img.chunks[idx]
+        chunk.data
       else
         h = decode_param_string name
         h[:limit] = @options[:limit] if @options[:limit] != Checker::DEFAULT_LIMIT
