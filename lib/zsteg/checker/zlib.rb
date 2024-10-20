@@ -21,6 +21,7 @@ module ZSteg
       # http://blog.w3challs.com/index.php?post/2012/03/25/NDH2k12-Prequals-We-are-looking-for-a-real-hacker-Wallpaper-image
       # http://blog.w3challs.com/public/ndh2k12_prequalls/sp113.bmp
       def self.check_data data
+        data = data.force_encoding('ASCII-8BIT')
         return unless idx = data.index(/\x78[\x9c\xda\x01]/n)
 
         zi = ::Zlib::Inflate.new
