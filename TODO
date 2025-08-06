@@ -11,6 +11,8 @@
 [ ] advices on what tool to use
 [ ] SilentEye
 [ ] chunks length check, as in pngcheck
+[ ] hiding data in iCCP
+[ ] hiding data before/after ICC apply
 
 [ ] CLI: self-describe
 
