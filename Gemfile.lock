@@ -74,7 +74,7 @@ GEM
     prime (0.1.2)
       forwardable
       singleton
-    psych (5.1.0)
+    psych (5.1.2)
       stringio
     public_suffix (5.0.1)
     racc (1.6.2)
@@ -82,7 +82,7 @@ GEM
     rainbow (3.1.1)
     rake (13.0.6)
     rchardet (1.8.0)
-    rdoc (6.5.0)
+    rdoc (6.6.3.1)
       psych (>= 4.0.0)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
@@ -100,7 +100,7 @@ GEM
     ruby2_keywords (0.0.5)
     semver2 (3.4.2)
     singleton (0.1.1)
-    stringio (3.0.5)
+    stringio (3.1.0)
     thread_safe (0.3.6)
     zpng (0.4.5)
       rainbow (~> 3.1.1)
