@@ -11,13 +11,13 @@ module ZSteg
       #   17 107 [bitloss] [secret size - 4 bytes] [secret type] [secret type length]
       #   17 107     1             4096             "text/plain"          10
       
-      class Result < IOStruct.new "nCNa*", :magic, :bitloss, :secret_size, :secret_type
+      class Result < IOStruct.new("nCNa*", :magic, :bitloss, :secret_size, :secret_type, struct_name: 'SteganographyPNG')
         def valid?
           magic == 0x116b && (1..8).include?(bitloss)
         end
 
         def to_s
-          super.sub('#<struct ZSteg::Checker::SteganographyPNG::Result', 'SteganographyPNG').sub(/>$/,'').bright_red
+          super.sub(/>$/,'').bright_red
         end
       end
 

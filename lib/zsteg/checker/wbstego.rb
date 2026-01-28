@@ -11,7 +11,7 @@ module ZSteg
         "Rijndael",  # 4
       ]
 
-      class Result < IOStruct.new "a3a3a*", :size, :ext, :data, :even, :hdr, :enc, :mix, :controlbyte
+      class Result < IOStruct.new("a3a3a*", :size, :ext, :data, :even, :hdr, :enc, :mix, :controlbyte, struct_name: 'wbStego')
         attr_accessor :color
 
         def initialize *args
@@ -39,7 +39,6 @@ module ZSteg
 
         def to_s
           s = inspect.
-              sub("#<struct #{self.class.to_s}", "<wbStego").
               gsub(/, \w+=nil/,'')
 
           color = @color

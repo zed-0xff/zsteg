@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
-gem "zpng", ">= 0.4.5"
-gem "iostruct", ">= 0.0.5"
+gem "zpng", ">= 0.4.6"
+gem "iostruct", ">= 0.7.0"
 gem "prime"
 
 group :development do

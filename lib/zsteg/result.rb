@@ -8,8 +8,9 @@ module ZSteg
       end
     end
 
-    class OpenStego < IOStruct.new "CVCCCC",
-      :version, :data_len, :channel_bits, :fname_len, :compress, :encrypt, :fname
+    class OpenStego < IOStruct.new("CVCCCC",
+                                   :version, :data_len, :channel_bits, :fname_len, :compress, :encrypt, :fname,
+                                   struct_name: 'OpenStego')
 
       def self.read io
         super.tap do |r|
@@ -18,7 +19,7 @@ module ZSteg
       end
 
       def to_s
-        super.sub(/^<Result::/,'').sub(/>$/,'').bright_red
+        super.sub(/>$/,'').bright_red
       end
     end
 
